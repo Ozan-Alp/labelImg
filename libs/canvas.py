@@ -699,7 +699,9 @@ class Canvas(QWidget):
         self.repaint()
 
     def load_shapes(self, shapes):
+        
         self.shapes = list(shapes)
+        print(len(self.shapes))
         self.current = None
         self.repaint()
 

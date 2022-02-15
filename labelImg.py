@@ -129,6 +129,8 @@ class MainWindow(QMainWindow, WindowMixin):
         # Create a widget for using default label
         self.use_default_label_checkbox = QCheckBox(get_str('useDefaultLabel'))
         self.use_default_label_checkbox.setChecked(False)
+        self.invert = QCheckBox("Invert")
+        self.invert.setChecked(False)
         self.default_label_combo_box = DefaultLabelComboBox(self,items=self.label_hist)
 
         use_default_label_qhbox_layout = QHBoxLayout()
@@ -166,7 +168,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
 
 
-        self.dock = QDockWidget(get_str('boxLabelText'), self)
+        self.dock = QDockWidget(get_str('boxLabelText'), self)#subwindow gibi dusun
         self.dock.setObjectName(get_str('labels'))
         self.dock.setWidget(label_list_container)
 
@@ -177,6 +179,28 @@ class MainWindow(QMainWindow, WindowMixin):
         file_list_layout.addWidget(self.file_list_widget)
         file_list_container = QWidget()
         file_list_container.setLayout(file_list_layout)
+
+        #ozan buraya img docku gelecek ################ baslangic ################
+        # Radio buttonlari grup icine al
+        self.radio_group = QButtonGroup()
+
+        self.enhancement_original = QRadioButton("Original")
+        self.enhancement_invert = QRadioButton("Invert")
+        self.enhancement_original.toggled.connect(lambda:self.reset_image(self.enhancement_original))
+        self.enhancement_invert.toggled.connect(lambda:self.invert_image(self.enhancement_invert))
+        self.radio_group.addButton(self.enhancement_original)
+        self.radio_group.addButton(self.enhancement_invert)
+
+        enhancement_layout = QVBoxLayout()
+        enhancement_layout.addWidget(self.enhancement_original)
+        enhancement_layout.addWidget(self.enhancement_invert)
+        enhancement_container = QWidget()
+        enhancement_container.setLayout(enhancement_layout)
+        self.img_dock= QDockWidget("Enhancements", self)
+        self.img_dock.setWidget(enhancement_container)
+
+
+        ####################   bitis  ##############################
         self.file_dock = QDockWidget(get_str('fileList'), self)
         self.file_dock.setObjectName(get_str('files'))
         self.file_dock.setWidget(file_list_container)
@@ -205,6 +229,8 @@ class MainWindow(QMainWindow, WindowMixin):
 
         self.setCentralWidget(scroll)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dock)
+        #ozan buraya img checkbox docku gelecek
+        self.addDockWidget(Qt.RightDockWidgetArea, self.img_dock)
         self.addDockWidget(Qt.RightDockWidgetArea, self.file_dock)
         self.file_dock.setFeatures(QDockWidget.DockWidgetFloatable)
 
@@ -740,7 +766,22 @@ class MainWindow(QMainWindow, WindowMixin):
         filename = self.m_img_list[self.cur_img_idx]
         if filename:
             self.load_file(filename)
+    def reset_image(self, btn_name):
+        if btn_name.isChecked():
+            print("lol")
+            self.canvas.load_pixmap(QPixmap.fromImage(self.image_data))
 
+    def invert_image(self, btn_name):
+        if btn_name.isChecked():  #color table, image icindeki tum farkli renklerin listesi, her index ayri QColor itemi, Qcolor(254,168,86) gibi
+            inverted_raw = self.image_data.copy()
+            inverted_raw.invertPixels()
+            self.canvas.load_pixmap(QPixmap.fromImage(inverted_raw))
+            #print([x[1] for x in list(self.items_to_shapes.items())])
+            self.canvas.load_shapes([x[1] for x in list(self.items_to_shapes.items())])
+            #self.canvas.repaint()
+            # for shape in self.canvas.shapes:
+            #     shape.paint()
+            # self.canvas.repaint()
     # Add chris
     def button_state(self, item=None):
         """ Function to handle difficult examples
@@ -1602,7 +1643,7 @@ class MainWindow(QMainWindow, WindowMixin):
     def toggle_draw_square(self):
         self.canvas.set_drawing_shape_to_square(self.draw_squares_option.isChecked())
 
-def inverted(color):
+def inverted(color):# bu tek bir Qcolor itemini ceviriyor
     return QColor(*[255 - v for v in color.getRgb()])
 
 
