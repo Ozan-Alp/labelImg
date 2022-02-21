@@ -9,6 +9,7 @@ except ImportError:
 
 # from PyQt4.QtOpenGL import *
 
+from sympy import Q
 from libs.shape import Shape
 from libs.utils import distance
 
@@ -49,6 +50,9 @@ class Canvas(QWidget):
         self.scale = 1.0
         self.label_font_size = 8
         self.pixmap = QPixmap()
+        self.save_pixmap = QPixmap()
+        self.save_painter = QPainter(self.save_pixmap)
+        print("lol")
         self.visible = {}
         self._hide_background = False
         self.hide_background = False
@@ -489,13 +493,65 @@ class Canvas(QWidget):
         self.prev_point = point
         if not self.bounded_move_shape(shape, point - offset):
             self.bounded_move_shape(shape, point + offset)
+            
+    def paint_save(self, image):
+        q = QPainter(image)
+        # pixmap olustur boyut ver sonra beyazla doldur 
+        print("mobo")
+        q.setRenderHint(QPainter.Antialiasing)
+        q.setRenderHint(QPainter.HighQualityAntialiasing)
+        q.setRenderHint(QPainter.SmoothPixmapTransform)
 
+        #q.scale(self.scale, self.scale)# scale canvas zoomu sebebiyle yapiliyor, burada direk default pixmape cizdigimiz icin scale olmamali
+        #q.translate(self.offset_to_center())
+
+        #q.drawPixmap(0, 0, QPixmap.fromImage(image))
+        #Shape.scale = self.scale
+        #Shape.label_font_size = self.label_font_size
+        for shape in self.shapes:
+            if (shape.selected or not self._hide_background) and self.isVisible(shape):
+                shape.fill = False# or shape == self.h_shape #shape.fill = shape.selected , NOT: burada sacmalamis or ve sonrasi bos
+                shape.paint(q)
+        if self.current:
+            self.current.paint(q)
+            self.line.paint(q)
+        if self.selected_shape_copy:
+            self.selected_shape_copy.paint(q)
+        # Paint rect
+        if self.current is not None and len(self.line) == 2:
+            left_top = self.line[0]
+            right_bottom = self.line[1]
+            rect_width = right_bottom.x() - left_top.x()
+            rect_height = right_bottom.y() - left_top.y()
+            q.setPen(self.drawing_rect_color)
+            brush = QBrush(Qt.BDiagPattern)
+            q.setBrush(brush)
+            q.drawRect(int(left_top.x()), int(left_top.y()), int(rect_width), int(rect_height))
+
+        if self.drawing() and not self.prev_point.isNull() and not self.out_of_pixmap(self.prev_point):
+            q.setPen(QColor(0, 0, 0))
+            q.drawLine(int(self.prev_point.x()), 0, int(self.prev_point.x()), int(self.pixmaq.height()))
+            q.drawLine(0, int(self.prev_point.y()), int(self.pixmap.width()), int(self.prev_point.y()))
+
+        self.setAutoFillBackground(True)
+        if self.verified:
+            pal = self.palette()
+            pal.setColor(self.backgroundRole(), QColor(184, 239, 38, 128))
+            self.setPalette(pal)
+        else:
+            pal = self.palette()
+            pal.setColor(self.backgroundRole(), QColor(232, 232, 232, 255))
+            self.setPalette(pal)
+        print("komo")
+        self.update()
+
+    
     def paintEvent(self, event):
         if not self.pixmap:
             return super(Canvas, self).paintEvent(event)
 
         p = self._painter
-        p.begin(self)
+        p.begin(self) # disarda initte constructor qpainter olusturursan begin end ile painting yaparkenki resourcesleri siliyorsun
         p.setRenderHint(QPainter.Antialiasing)
         p.setRenderHint(QPainter.HighQualityAntialiasing)
         p.setRenderHint(QPainter.SmoothPixmapTransform)
@@ -508,7 +564,7 @@ class Canvas(QWidget):
         Shape.label_font_size = self.label_font_size
         for shape in self.shapes:
             if (shape.selected or not self._hide_background) and self.isVisible(shape):
-                shape.fill = shape.selected or shape == self.h_shape
+                shape.fill = shape.selected #or shape == self.h_shape
                 shape.paint(p)
         if self.current:
             self.current.paint(p)
@@ -543,6 +599,7 @@ class Canvas(QWidget):
             self.setPalette(pal)
 
         p.end()
+
 
     def transform_pos(self, point):
         """Convert from widget-logical coordinates to painter-logical coordinates."""
@@ -698,10 +755,10 @@ class Canvas(QWidget):
         self.shapes = []
         self.repaint()
 
-    def load_shapes(self, shapes):
+    def load_shapes(self, shapes):  # repaint painteventi triggerliyor, painteventin icinde self.shapesi paint ediyor
         
         self.shapes = list(shapes)
-        print(len(self.shapes))
+        #print(len(self.shapes))
         self.current = None
         self.repaint()
 

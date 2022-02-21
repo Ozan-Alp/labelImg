@@ -86,7 +86,7 @@ class Shape(object):
 
     def paint(self, painter):
         if self.points:
-            color = self.select_line_color if self.selected else self.line_color
+            color = self.line_color # self.select_line_color if self.selected else self.line_color
             pen = QPen(color)
             # Try using integer sizes for smoother drawing(?)
             pen.setWidth(max(1, int(round(2.0 / self.scale))))
@@ -107,7 +107,7 @@ class Shape(object):
             if self.is_closed():
                 line_path.lineTo(self.points[0])
 
-            painter.drawPath(line_path)
+            painter.drawPath(line_path)  # bu 3 satir dis cerceve ve kose noktalari
             painter.drawPath(vertex_path)
             painter.fillPath(vertex_path, self.vertex_fill_color)
 
@@ -130,7 +130,8 @@ class Shape(object):
                         min_y += min_y_label
                     painter.drawText(int(min_x), int(min_y), self.label)
 
-            if self.fill:
+                #pass
+            if self.fill: # box icini burasi dolduruyor
                 color = self.select_fill_color if self.selected else self.fill_color
                 painter.fillPath(line_path, color)
 

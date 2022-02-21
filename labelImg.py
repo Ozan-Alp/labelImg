@@ -38,6 +38,7 @@ from libs.settings import Settings
 from libs.shape import Shape, DEFAULT_LINE_COLOR, DEFAULT_FILL_COLOR
 from libs.stringBundle import StringBundle
 from libs.canvas import Canvas
+from libs.custompix import Custompix
 from libs.zoomWidget import ZoomWidget
 from libs.labelDialog import LabelDialog
 from libs.colorDialog import ColorDialog
@@ -93,7 +94,7 @@ class MainWindow(QMainWindow, WindowMixin):
         get_str = lambda str_id: self.string_bundle.get_string(str_id)
 
         # Save as Pascal voc xml
-        self.default_save_dir = default_save_dir
+        self.default_save_dir = None#default_save_dir
         self.label_file_format = settings.get(SETTING_LABEL_FILE_FORMAT, LabelFileFormat.PASCAL_VOC)
 
         # For loading all image under a directory
@@ -128,7 +129,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         # Create a widget for using default label
         self.use_default_label_checkbox = QCheckBox(get_str('useDefaultLabel'))
-        self.use_default_label_checkbox.setChecked(False)
+        self.use_default_label_checkbox.setChecked(True)
         self.invert = QCheckBox("Invert")
         self.invert.setChecked(False)
         self.default_label_combo_box = DefaultLabelComboBox(self,items=self.label_hist)
@@ -185,11 +186,14 @@ class MainWindow(QMainWindow, WindowMixin):
         self.radio_group = QButtonGroup()
 
         self.enhancement_original = QRadioButton("Original")
-        self.enhancement_invert = QRadioButton("Invert")
         self.enhancement_original.toggled.connect(lambda:self.reset_image(self.enhancement_original))
-        self.enhancement_invert.toggled.connect(lambda:self.invert_image(self.enhancement_invert))
         self.radio_group.addButton(self.enhancement_original)
+        self.enhancement_invert = QRadioButton("Invert")
+        self.enhancement_invert.toggled.connect(lambda:self.invert_image(self.enhancement_invert))
         self.radio_group.addButton(self.enhancement_invert)
+        self.enhancement_hist = QRadioButton("HIST")
+        self.enhancement_invert.toggled.connect(lambda:self.hist_image(self.enhancement_hist))
+        self.radio_group.addButton(self.enhancement_hist)
 
         enhancement_layout = QVBoxLayout()
         enhancement_layout.addWidget(self.enhancement_original)
@@ -207,7 +211,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         self.zoom_widget = ZoomWidget()
         self.color_dialog = ColorDialog(parent=self)
-
+        self.custompix=Custompix(parent=self)
         self.canvas = Canvas(parent=self)
         self.canvas.zoomRequest.connect(self.zoom_request)
         self.canvas.set_drawing_shape_to_square(settings.get(SETTING_DRAW_SQUARE, False))
@@ -231,6 +235,8 @@ class MainWindow(QMainWindow, WindowMixin):
         self.addDockWidget(Qt.RightDockWidgetArea, self.dock)
         #ozan buraya img checkbox docku gelecek
         self.addDockWidget(Qt.RightDockWidgetArea, self.img_dock)
+        self.img_dock_features = QDockWidget.DockWidgetClosable
+        self.img_dock.setFeatures(self.img_dock.features() ^ self.img_dock_features)#bitwise xor yaparak closableyi falan kapatiyor
         self.addDockWidget(Qt.RightDockWidgetArea, self.file_dock)
         self.file_dock.setFeatures(QDockWidget.DockWidgetFloatable)
 
@@ -238,7 +244,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.dock.setFeatures(self.dock.features() ^ self.dock_features)
 
         # Actions
-        action = partial(new_action, self)
+        action = partial(new_action, self) # 
         quit = action(get_str('quit'), self.close,
                       'Ctrl+Q', 'quit', get_str('quitApp'))
 
@@ -256,10 +262,10 @@ class MainWindow(QMainWindow, WindowMixin):
         copy_prev_bounding = action(get_str('copyPrevBounding'), self.copy_previous_bounding_boxes, 'Ctrl+v', 'copy', get_str('copyPrevBounding'))
 
         open_next_image = action(get_str('nextImg'), self.open_next_image,
-                                 'd', 'next', get_str('nextImgDetail'))
+                                 Qt.Key_Right, 'next', get_str('nextImgDetail'))
 
         open_prev_image = action(get_str('prevImg'), self.open_prev_image,
-                                 'a', 'prev', get_str('prevImgDetail'))
+                                 Qt.Key_Left, 'prev', get_str('prevImgDetail'))
 
         verify = action(get_str('verifyImg'), self.verify_image,
                         'space', 'verify', get_str('verifyImgDetail'))
@@ -450,7 +456,7 @@ class MainWindow(QMainWindow, WindowMixin):
             action('&Move here', self.move_shape)))
 
         self.tools = self.toolbar('Tools')
-        self.actions.beginner = (
+        self.actions.beginner = (#sol menu burasi
             open, open_dir, change_save_dir, open_next_image, open_prev_image, verify, save, save_format, None, create, copy, delete, None,
             zoom_in, zoom, zoom_out, fit_window, fit_width)
 
@@ -495,11 +501,12 @@ class MainWindow(QMainWindow, WindowMixin):
         self.move(position)
         save_dir = ustr(settings.get(SETTING_SAVE_DIR, None))
         self.last_open_dir = ustr(settings.get(SETTING_LAST_OPEN_DIR, None))
-        if self.default_save_dir is None and save_dir is not None and os.path.exists(save_dir):
-            self.default_save_dir = save_dir
-            self.statusBar().showMessage('%s started. Annotation will be saved to %s' %
-                                         (__appname__, self.default_save_dir))
-            self.statusBar().show()
+        # if self.default_save_dir is None and save_dir is not None and os.path.exists(save_dir):
+        #     self.default_save_dir = save_dir #make buildinin icinde kayidediyor buraya giriyor ondan patlamis
+        #     print("nooo")
+        #     self.statusBar().showMessage('%s started. Annotation will be saved to %s' %
+        #                                  (__appname__, self.default_save_dir))
+        #     self.statusBar().show()
 
         self.restoreState(settings.get(SETTING_WIN_STATE, QByteArray()))
         Shape.line_color = self.line_color = QColor(settings.get(SETTING_LINE_COLOR, DEFAULT_LINE_COLOR))
@@ -766,22 +773,36 @@ class MainWindow(QMainWindow, WindowMixin):
         filename = self.m_img_list[self.cur_img_idx]
         if filename:
             self.load_file(filename)
-    def reset_image(self, btn_name):
-        if btn_name.isChecked():
-            print("lol")
-            self.canvas.load_pixmap(QPixmap.fromImage(self.image_data))
+    
+    def Enhance_decorator(fonk):
+        def wrapper(self, btn):
+            if btn.isChecked():
+                    fonk(self, btn)
+        return wrapper
 
-    def invert_image(self, btn_name):
-        if btn_name.isChecked():  #color table, image icindeki tum farkli renklerin listesi, her index ayri QColor itemi, Qcolor(254,168,86) gibi
-            inverted_raw = self.image_data.copy()
-            inverted_raw.invertPixels()
-            self.canvas.load_pixmap(QPixmap.fromImage(inverted_raw))
-            #print([x[1] for x in list(self.items_to_shapes.items())])
-            self.canvas.load_shapes([x[1] for x in list(self.items_to_shapes.items())])
-            #self.canvas.repaint()
-            # for shape in self.canvas.shapes:
-            #     shape.paint()
-            # self.canvas.repaint()
+
+    @Enhance_decorator
+    def reset_image(self, btn):#self, btn
+        # if btn.isChecked():
+        #     print("lol")
+        self.canvas.load_pixmap(QPixmap.fromImage(self.image_data))
+        self.canvas.load_shapes([x[1] for x in list(self.items_to_shapes.items())])
+
+    @Enhance_decorator
+    def invert_image(self, btn):
+        #if btn.isChecked():  #color table, image icindeki tum farkli renklerin listesi, her index ayri QColor itemi, Qcolor(254,168,86) gibi
+        inverted_raw = self.image_data.copy()
+        inverted_raw.invertPixels()
+        self.canvas.load_pixmap(QPixmap.fromImage(inverted_raw))
+        #print([x[1] for x in list(self.items_to_shapes.items())])
+        self.canvas.load_shapes([x[1] for x in list(self.items_to_shapes.items())])
+        #self.canvas.repaint()
+        # for shape in self.canvas.shapes:
+        #     shape.paint()
+        # self.canvas.repaint()
+
+    def hist_image(self, btn_name):
+        pass
     # Add chris
     def button_state(self, item=None):
         """ Function to handle difficult examples
@@ -906,13 +927,18 @@ class MainWindow(QMainWindow, WindowMixin):
         shapes = [format_shape(shape) for shape in self.canvas.shapes]
         # Can add different annotation formats here
         try:
+            #save image kismi
+            self.image_data # orj resim
+
+            self.file_path # resmin full pathi
+            #######
             if self.label_file_format == LabelFileFormat.PASCAL_VOC:
                 if annotation_file_path[-4:].lower() != ".xml":
                     annotation_file_path += XML_EXT
                 self.label_file.save_pascal_voc_format(annotation_file_path, shapes, self.file_path, self.image_data,
                                                        self.line_color.getRgb(), self.fill_color.getRgb())
             elif self.label_file_format == LabelFileFormat.YOLO:
-                if annotation_file_path[-4:].lower() != ".txt":
+                if annotation_file_path[-4:].lower() != ".txt": # burada sonunu check ediyor eslesmezse ekliyor
                     annotation_file_path += TXT_EXT
                 self.label_file.save_yolo_format(annotation_file_path, shapes, self.file_path, self.image_data, self.label_hist,
                                                  self.line_color.getRgb(), self.fill_color.getRgb())
@@ -1291,6 +1317,7 @@ class MainWindow(QMainWindow, WindowMixin):
     def change_save_dir_dialog(self, _value=False):
         if self.default_save_dir is not None:
             path = ustr(self.default_save_dir)
+            print("defaul is not none")
         else:
             path = '.'
 
@@ -1300,7 +1327,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         if dir_path is not None and len(dir_path) > 1:
             self.default_save_dir = dir_path
-
+            print("dir path is", dir_path)
         self.statusBar().showMessage('%s . Annotation will be saved to %s' %
                                      ('Change saved folder', self.default_save_dir))
         self.statusBar().show()
@@ -1396,6 +1423,7 @@ class MainWindow(QMainWindow, WindowMixin):
             filename = self.m_img_list[self.cur_img_idx]
             if filename:
                 self.load_file(filename)
+        self.enhancement_original.setChecked(True)
 
     def open_next_image(self, _value=False):
         # Proceeding next image without dialog if having any label
@@ -1427,6 +1455,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         if filename:
             self.load_file(filename)
+        self.enhancement_original.setChecked(True)
 
     def open_file(self, _value=False):
         if not self.may_continue():
@@ -1442,37 +1471,60 @@ class MainWindow(QMainWindow, WindowMixin):
             self.img_count = 1
             self.load_file(filename)
 
-    def save_file(self, _value=False):
+    def save_file(self, _value=False):#save_dir change_save_dir ile seciliyse bir daha save file dialog acmiyor
         if self.default_save_dir is not None and len(ustr(self.default_save_dir)):
             if self.file_path:
                 image_file_name = os.path.basename(self.file_path)
                 saved_file_name = os.path.splitext(image_file_name)[0]
+                #buraya label folderi acilcak
                 saved_path = os.path.join(ustr(self.default_save_dir), saved_file_name)
-                self._save_file(saved_path)
+                print("1476",self.default_save_dir)
+                #self._save_file(saved_path)
+                self._save_file(self.save_file_dialog(remove_ext=False)) # uzanti haric full path giriyor
+
+
         else:
             image_file_dir = os.path.dirname(self.file_path)
             image_file_name = os.path.basename(self.file_path)
             saved_file_name = os.path.splitext(image_file_name)[0]
+            print("saved_file_name is ",saved_file_name)
             saved_path = os.path.join(image_file_dir, saved_file_name)
-            self._save_file(saved_path if self.label_file
-                            else self.save_file_dialog(remove_ext=False))
+            # self._save_file(saved_path if self.label_file
+            #                 else self.save_file_dialog(remove_ext=False))
+            self._save_file(self.save_file_dialog(remove_ext=False)) # uzanti haric full path giriyor
+            
 
     def save_file_as(self, _value=False):
         assert not self.image.isNull(), "cannot save empty image"
-        self._save_file(self.save_file_dialog())
+        self._save_file(self.save_file_dialog()) # uzanti haric full path giriyor
+       
 
     def save_file_dialog(self, remove_ext=True):
         caption = '%s - Choose File' % __appname__
-        filters = 'File (*%s)' % LabelFile.suffix
-        open_dialog_path = self.current_path()
+        #filters = 'File (*%s)' % LabelFile.suffix
+        filters = "File (*.jpg)"
+        if self.default_save_dir is None:
+            if not os.path.exists(os.path.join(self.current_path(), "labeled")):
+                os.mkdir(os.path.join(self.current_path(), "labeled"))
+            self.default_save_dir = os.path.join(self.current_path(), "labeled")
+
+        open_dialog_path = self.default_save_dir#os.path.join(self.current_path(), "labeled")#self.current_path()
+        print("dialog_path", self.default_save_dir)
         dlg = QFileDialog(self, caption, open_dialog_path, filters)
-        dlg.setDefaultSuffix(LabelFile.suffix[1:])
+        #dlg.setDefaultSuffix(LabelFile.suffix[1:])
+        #dlg.setDefaultSuffix("txt")
         dlg.setAcceptMode(QFileDialog.AcceptSave)
-        filename_without_extension = os.path.splitext(self.file_path)[0]
-        dlg.selectFile(filename_without_extension)
+        filename_without_extension = os.path.splitext(self.file_path)[0]# resim lokasyonunun.jpg olmadan full pathi
+        #filename_without_extension = os.path.join(self.default_save_dir,)[0]
+        #print("filenamewoext",filename_without_extension)
+        #os.path joinde falan ortadaki itemlere / koyarsan sol tarafi siler direk /la baslayan itemden baslas absolute pathi resetler
+        
+        dlg.selectFile(filename_without_extension.split('/')[-1])#absolute path verince dialog folderini oraya cekiyor, vermezsen open_dialog_pathtaki yeri aciyor,
+        #burada sadece uzantisiz resmin adini sectiriyorum
         dlg.setOption(QFileDialog.DontUseNativeDialog, False)
         if dlg.exec_():
-            full_file_path = ustr(dlg.selectedFiles()[0])
+            full_file_path = ustr(dlg.selectedFiles()[0])#(opendialog+selectfile)
+            print("save icin kullanilan final path",full_file_path) # uzanti haric full path
             if remove_ext:
                 return os.path.splitext(full_file_path)[0]  # Return file path without the extension.
             else:
@@ -1481,6 +1533,11 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def _save_file(self, annotation_file_path):
         if annotation_file_path and self.save_labels(annotation_file_path):
+            #self.custompix.pixmap = self.image_data.copy()
+            self.canvas.save_pixmap=QPixmap.fromImage(self.image_data)
+            self.canvas.paint_save(self.canvas.save_pixmap)
+            print("kutulu resim kaydetme", annotation_file_path)
+            self.canvas.save_pixmap.save(annotation_file_path+".jpg", format='jpg')# quality ve format secilebilir, bos kalirsa formati uzanti stringinden cekiyor
             self.set_clean()
             self.statusBar().showMessage('Saved to  %s' % annotation_file_path)
             self.statusBar().show()
@@ -1610,6 +1667,7 @@ class MainWindow(QMainWindow, WindowMixin):
             return
 
         self.set_format(FORMAT_YOLO)
+        print("txt_path is, ", txt_path)
         t_yolo_parse_reader = YoloReader(txt_path, self.image)
         shapes = t_yolo_parse_reader.get_shapes()
         print(shapes)
@@ -1686,7 +1744,55 @@ def get_main_app(argv=None):
     win.show()
     return app, win
 
+def paint_save(self, image):
+        q = self.save_painter
+        print("mobo")
+        q.setRenderHint(QPainter.Antialiasing)
+        q.setRenderHint(QPainter.HighQualityAntialiasing)
+        q.setRenderHint(QPainter.SmoothPixmapTransform)
 
+        q.scale(self.scale, self.scale)
+        q.translate(self.offset_to_center())
+
+        q.drawPixmap(0, 0, QPixmap.fromImage(image))
+        Shape.scale = self.scale
+        Shape.label_font_size = self.label_font_size
+        for shape in self.shapes:
+            if (shape.selected or not self._hide_background) and self.isVisible(shape):
+                shape.fill = shape.selected or shape == self.h_shape #shape.fill = shape.selected
+                shape.paint(q)
+        if self.current:
+            self.current.paint(q)
+            self.line.paint(q)
+        if self.selected_shape_copy:
+            self.selected_shape_copy.paint(q)
+        # Paint rect
+        if self.current is not None and len(self.line) == 2:
+            left_top = self.line[0]
+            right_bottom = self.line[1]
+            rect_width = right_bottom.x() - left_top.x()
+            rect_height = right_bottom.y() - left_top.y()
+            q.setPen(self.drawing_rect_color)
+            brush = QBrush(Qt.BDiagPattern)
+            q.setBrush(brush)
+            q.drawRect(int(left_top.x()), int(left_top.y()), int(rect_width), int(rect_height))
+
+        if self.drawing() and not self.prev_point.isNull() and not self.out_of_pixmap(self.prev_point):
+            q.setPen(QColor(0, 0, 0))
+            q.drawLine(int(self.prev_point.x()), 0, int(self.prev_point.x()), int(self.pixmaq.height()))
+            q.drawLine(0, int(self.prev_point.y()), int(self.pixmap.width()), int(self.prev_point.y()))
+
+        self.setAutoFillBackground(True)
+        if self.verified:
+            pal = self.palette()
+            pal.setColor(self.backgroundRole(), QColor(184, 239, 38, 128))
+            self.setPalette(pal)
+        else:
+            pal = self.palette()
+            pal.setColor(self.backgroundRole(), QColor(232, 232, 232, 255))
+            self.setPalette(pal)
+        print("komo")
+        q.end()
 def main():
     """construct main app and run it"""
     app, _win = get_main_app(sys.argv)
