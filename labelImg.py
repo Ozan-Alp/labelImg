@@ -10,7 +10,8 @@ import sys
 import subprocess
 import shutil
 import webbrowser as wb
-
+import cv2
+import numpy as np
 from functools import partial
 from collections import defaultdict
 
@@ -38,7 +39,7 @@ from libs.settings import Settings
 from libs.shape import Shape, DEFAULT_LINE_COLOR, DEFAULT_FILL_COLOR
 from libs.stringBundle import StringBundle
 from libs.canvas import Canvas
-from libs.custompix import Custompix
+#from libs.custompix import Custompix
 from libs.zoomWidget import ZoomWidget
 from libs.labelDialog import LabelDialog
 from libs.colorDialog import ColorDialog
@@ -192,12 +193,13 @@ class MainWindow(QMainWindow, WindowMixin):
         self.enhancement_invert.toggled.connect(lambda:self.invert_image(self.enhancement_invert))
         self.radio_group.addButton(self.enhancement_invert)
         self.enhancement_hist = QRadioButton("HIST")
-        self.enhancement_invert.toggled.connect(lambda:self.hist_image(self.enhancement_hist))
+        self.enhancement_hist.toggled.connect(lambda:self.histogram_eq(self.enhancement_hist))
         self.radio_group.addButton(self.enhancement_hist)
 
         enhancement_layout = QVBoxLayout()
         enhancement_layout.addWidget(self.enhancement_original)
         enhancement_layout.addWidget(self.enhancement_invert)
+        enhancement_layout.addWidget(self.enhancement_hist)
         enhancement_container = QWidget()
         enhancement_container.setLayout(enhancement_layout)
         self.img_dock= QDockWidget("Enhancements", self)
@@ -211,7 +213,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         self.zoom_widget = ZoomWidget()
         self.color_dialog = ColorDialog(parent=self)
-        self.custompix=Custompix(parent=self)
+        #self.custompix=Custompix(parent=self)
         self.canvas = Canvas(parent=self)
         self.canvas.zoomRequest.connect(self.zoom_request)
         self.canvas.set_drawing_shape_to_square(settings.get(SETTING_DRAW_SQUARE, False))
@@ -801,8 +803,55 @@ class MainWindow(QMainWindow, WindowMixin):
         #     shape.paint()
         # self.canvas.repaint()
 
-    def hist_image(self, btn_name):
-        pass
+    @Enhance_decorator
+    def histogram_eq(self, btn):
+        print("len orj", self.image_data.bytesPerLine())
+        gray= self.image_data.copy().convertToFormat(QImage.Format_Grayscale8)#qimage boyutlari 4un kati olabiliyor 478i 480e ceviriyor
+        print("len gray", gray.bytesPerLine())
+        #gray= self.image_data.copy().convertToFormat(QImage.Format.Format_RGBA8888)
+        print("gray", gray.height(), gray.width())
+        cv_gray= self.convertQImageToMat(gray)
+        # w, h= gray.width(), gray.height()
+        # hist=[0]*255
+        # for row_id in range(h):
+        #     for col in range(w):
+        #         hist[gray.pixel(h,w)]=hist[gray.pixel(h,w)]+1
+        equ = cv2.equalizeHist(cv_gray)
+        final_rgb=self.convert_nparray_to_QPixmap(equ)
+        lobo=np.hstack((cv_gray,equ))
+        # cv2.imshow("lol", lobo)
+        # if cv2.waitKey(0)& 0xFF == ord('q'):
+        #     pass
+        self.canvas.load_pixmap(final_rgb)
+        self.canvas.load_shapes([x[1] for x in list(self.items_to_shapes.items())])
+
+    def convertQImageToMat(self, incomingImage):
+        '''  Converts a QImage into an opencv MAT format  '''
+
+        #incomingImage = incomingImage.convertToFormat(QImage.Format_Grayscale8)  # sayida verebilirsin 4 rgb32 demek
+        width = incomingImage.width()
+        height = incomingImage.height()
+        print("h, w gray", height, width)
+        ptr = incomingImage.bits()
+        print("len gray", incomingImage.bytesPerLine())
+        dif=(4-width%4)%4
+        ptr.setsize((width+dif)*height*1)#bits satirlari 4un katina tamamliyor oyuzdne her satirda 2 pixel kayiyordu cerceveyi 2 pixel genisletip sonra son 2 sutunu sildim
+        arr = np.array(ptr, np.uint8).reshape(height,width+dif)[:,:width-dif]  #  burada width 2 eksik cikiYOR BUNU COZ
+        # cv2.imshow("lol", arr)
+        # if cv2.waitKey(0)& 0xFF == ord('q'):
+        #     pass
+        print("arr",arr.shape)
+        return arr
+    def convert_nparray_to_QPixmap(self, img):
+        h,w = img.shape #grayscale
+        #Convert resulting image to pixmap
+        if img.ndim == 1:
+           img =  cv2.cvtColor(img,cv2.COLOR_GRAY2RGB)
+        print("img", img.shape)
+        qimg = QImage(img.data, w, h, 1*w, QImage.Format_Grayscale8)  #burasi patlak resim tutmuyor BUNU COZ
+        qpixmap = QPixmap(qimg)
+        print("qpix", qpixmap.width(), qpixmap.height())
+        return qpixmap
     # Add chris
     def button_state(self, item=None):
         """ Function to handle difficult examples
