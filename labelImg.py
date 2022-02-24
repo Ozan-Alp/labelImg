@@ -53,7 +53,7 @@ from libs.create_ml_io import CreateMLReader
 from libs.create_ml_io import JSON_EXT
 from libs.ustr import ustr
 from libs.hashableQListWidgetItem import HashableQListWidgetItem
-
+from libs.haze import *
 __appname__ = 'labelImg'
 
 
@@ -62,10 +62,11 @@ class WindowMixin(object):
     def menu(self, title, actions=None):
         menu = self.menuBar().addMenu(title)
         if actions:
-            add_actions(menu, actions)
+            pass
+           # add_actions(menu, actions)
         return menu
 
-    def toolbar(self, title, actions=None):
+    def toolbar(self, title, actions=None):# sol menu
         toolbar = ToolBar(title)
         toolbar.setObjectName(u'%sToolBar' % title)
         # toolbar.setOrientation(Qt.Vertical)
@@ -195,11 +196,14 @@ class MainWindow(QMainWindow, WindowMixin):
         self.enhancement_hist = QRadioButton("HIST")
         self.enhancement_hist.toggled.connect(lambda:self.histogram_eq(self.enhancement_hist))
         self.radio_group.addButton(self.enhancement_hist)
-
+        self.enhancement_haze = QRadioButton("Haze reduction")
+        self.enhancement_haze.toggled.connect(lambda:self.haze_img(self.enhancement_haze))
+        self.radio_group.addButton(self.enhancement_haze)
         enhancement_layout = QVBoxLayout()
         enhancement_layout.addWidget(self.enhancement_original)
         enhancement_layout.addWidget(self.enhancement_invert)
         enhancement_layout.addWidget(self.enhancement_hist)
+        enhancement_layout.addWidget(self.enhancement_haze)
         enhancement_container = QWidget()
         enhancement_container.setLayout(enhancement_layout)
         self.img_dock= QDockWidget("Enhancements", self)
@@ -241,12 +245,12 @@ class MainWindow(QMainWindow, WindowMixin):
         self.img_dock.setFeatures(self.img_dock.features() ^ self.img_dock_features)#bitwise xor yaparak closableyi falan kapatiyor
         self.addDockWidget(Qt.RightDockWidgetArea, self.file_dock)
         self.file_dock.setFeatures(QDockWidget.DockWidgetFloatable)
-
+        self.splitDockWidget(self.file_dock,self.img_dock, Qt.Vertical)
         self.dock_features = QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable
         self.dock.setFeatures(self.dock.features() ^ self.dock_features)
 
         # Actions
-        action = partial(new_action, self) # 
+        action = partial(new_action, self) # action variablesi new_action fonksiyonun sonuna self parametresi ekler
         quit = action(get_str('quit'), self.close,
                       'Ctrl+Q', 'quit', get_str('quitApp'))
 
@@ -458,7 +462,7 @@ class MainWindow(QMainWindow, WindowMixin):
             action('&Move here', self.move_shape)))
 
         self.tools = self.toolbar('Tools')
-        self.actions.beginner = (#sol menu burasi
+        self.actions.beginner = (#sol menu burasi buradan silince siliniyor
             open, open_dir, change_save_dir, open_next_image, open_prev_image, verify, save, save_format, None, create, copy, delete, None,
             zoom_in, zoom, zoom_out, fit_window, fit_width)
 
@@ -770,6 +774,7 @@ class MainWindow(QMainWindow, WindowMixin):
             self.update_combo_box()
 
     # Tzutalin 20160906 : Add file list and dock to move faster
+
     def file_item_double_clicked(self, item=None):
         self.cur_img_idx = self.m_img_list.index(ustr(item.text()))
         filename = self.m_img_list[self.cur_img_idx]
@@ -810,7 +815,7 @@ class MainWindow(QMainWindow, WindowMixin):
         print("len gray", gray.bytesPerLine())
         #gray= self.image_data.copy().convertToFormat(QImage.Format.Format_RGBA8888)
         print("gray", gray.height(), gray.width())
-        cv_gray= self.convertQImageToMat(gray)
+        cv_gray= self.convertQImageToMat(gray,1)
         # w, h= gray.width(), gray.height()
         # hist=[0]*255
         # for row_id in range(h):
@@ -824,31 +829,51 @@ class MainWindow(QMainWindow, WindowMixin):
         #     pass
         self.canvas.load_pixmap(final_rgb)
         self.canvas.load_shapes([x[1] for x in list(self.items_to_shapes.items())])
-
-    def convertQImageToMat(self, incomingImage):
+        
+    @Enhance_decorator
+    def haze_img(self, btn):
+        img=self.image_data.copy()
+        img.invertPixels()
+        cv_img=self.convertQImageToMat(img,4)
+        haze_img=haze(cv_img)
+      
+        final_haze=self.convert_nparray_to_QPixmap(haze_img, ndims=4, format=QImage.Format_RGB32, invert=True)
+        
+        self.canvas.load_pixmap(final_haze)
+        self.canvas.load_shapes([x[1] for x in list(self.items_to_shapes.items())])
+        # cv2.imshow("lol", haze_img)
+        # if cv2.waitKey(0)& 0xFF == ord('q'):
+        #      pass
+    def convertQImageToMat(self, incomingImage, ndims):
         '''  Converts a QImage into an opencv MAT format  '''
 
         #incomingImage = incomingImage.convertToFormat(QImage.Format_Grayscale8)  # sayida verebilirsin 4 rgb32 demek
+        print("format is ",incomingImage.format())
         width = incomingImage.width()
         height = incomingImage.height()
         print("h, w gray", height, width)
         ptr = incomingImage.bits()
+      
         print("len gray", incomingImage.bytesPerLine())
-        dif=(4-width%4)%4
-        ptr.setsize((width+dif)*height*1)#bits satirlari 4un katina tamamliyor oyuzdne her satirda 2 pixel kayiyordu cerceveyi 2 pixel genisletip sonra son 2 sutunu sildim
-        arr = np.array(ptr, np.uint8).reshape(height,width+dif)[:,:width-dif]  #  burada width 2 eksik cikiYOR BUNU COZ
+        dif=(4-(ndims*width)%4)%4  #8in katina tamamlamak icin eklenen byte sayisi icin dimensionla carpmak lazim
+        print("dif ",dif)# burada pisli kseyler var tam pixel doldurmaya bilir alttaki reshape patlicaktir, bizim direk eklenen pixeli cikarmamiz lazim
+        ptr.setsize((width+dif)*height*ndims)#bits satirlari 4un katina tamamliyor oyuzdne her satirda 2 pixel kayiyordu cerceveyi 2 pixel genisletip sonra son 2 sutunu sildim
+        arr = np.array(ptr, np.uint8).reshape(height,width+dif//ndims,ndims)[:,:width,:]  #eklenen byte saysinin resimdeki pixel kaymasini hesaplamak icin ndimse bolmek gerekir
+        arr = np.squeeze(arr)
         # cv2.imshow("lol", arr)
         # if cv2.waitKey(0)& 0xFF == ord('q'):
         #     pass
         print("arr",arr.shape)
         return arr
-    def convert_nparray_to_QPixmap(self, img):
-        h,w = img.shape #grayscale
+    def convert_nparray_to_QPixmap(self, img, ndims=1, format=QImage.Format_Grayscale8, invert=False):
+        h,w = img.shape[:2] #grayscale
         #Convert resulting image to pixmap
         if img.ndim == 1:
            img =  cv2.cvtColor(img,cv2.COLOR_GRAY2RGB)
         print("img", img.shape)
-        qimg = QImage(img.data, w, h, 1*w, QImage.Format_Grayscale8)  #burasi patlak resim tutmuyor BUNU COZ
+        qimg = QImage(img.data, w, h, ndims*w, format)  
+        if invert:
+            qimg.invertPixels()
         qpixmap = QPixmap(qimg)
         print("qpix", qpixmap.width(), qpixmap.height())
         return qpixmap

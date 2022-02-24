@@ -1,0 +1,3 @@
+/home/ozan/labelImg/libs/images/0.jpg
+/home/ozan/labelImg/libs/images/1.jpg
+/home/ozan/labelImg/libs/images/2.jpg
