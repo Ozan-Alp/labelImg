@@ -21,6 +21,7 @@ class YOLOWriter:
         self.box_list = []
         self.local_img_path = local_img_path
         self.verified = False
+        classes_txt = os.path.join(folder_name, "labeled", "classes.txt")
 
     def add_bnd_box(self, x_min, y_min, x_max, y_max, name, difficult):
         bnd_box = {'xmin': x_min, 'ymin': y_min, 'xmax': x_max, 'ymax': y_max}
@@ -42,7 +43,7 @@ class YOLOWriter:
 
         # PR387
         box_name = box['name']
-        if box_name not in class_list:
+        if box_name not in class_list: #burada classes.tcti okumak lazim 
             class_list.append(box_name)
 
         class_index = class_list.index(box_name)
@@ -73,6 +74,7 @@ class YOLOWriter:
 
         # print (classList)
         # print (out_class_file)
+
         for c in class_list:
             out_class_file.write(c+'\n')
 
@@ -87,10 +89,11 @@ class YoloReader:
         # shapes type:
         # [labbel, [(x1,y1), (x2,y2), (x3,y3), (x4,y4)], color, color, difficult]
         self.shapes = []
-        self.file_path = file_path
-
+        self.file_path = file_path #label.txt pathi
+        print("file.path",self.file_path )
         if class_list_path is None:
-            dir_path = os.path.dirname(os.path.realpath(self.file_path))
+            dir_path = os.path.dirname(os.path.realpath(self.file_path))# klasorun adini cekiyor
+           # self.class_list_path = os.path.join(dir_path,"labeled", "classes.txt")#yolo classlari buradan yukluyor #classes
             self.class_list_path = os.path.join(dir_path, "classes.txt")
         else:
             self.class_list_path = class_list_path
@@ -99,7 +102,7 @@ class YoloReader:
 
         classes_file = open(self.class_list_path, 'r')
         self.classes = classes_file.read().strip('\n').split('\n')
-
+       
         # print (self.classes)
 
         img_size = [image.height(), image.width(),
@@ -137,7 +140,10 @@ class YoloReader:
         return label, x_min, y_min, x_max, y_max
 
     def parse_yolo_format(self):
-        bnd_box_file = open(self.file_path, 'r')
+        dirname, only_file_name=os.path.split(self.file_path)
+        #dirname=os.path.join(os.path.dirname(os.path.abspath(self.filename)))
+        yolo_text_path=os.path.join(dirname, only_file_name)
+        bnd_box_file = open(self.file_path, 'r')#yolo_text_path
         for bndBox in bnd_box_file:
             class_index, x_center, y_center, w, h = bndBox.strip().split(' ')
             label, x_min, y_min, x_max, y_max = self.yolo_line_to_shape(class_index, x_center, y_center, w, h)

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#from __future__ import print_function
 import argparse
 import codecs
 import distutils.spawn
@@ -54,7 +55,16 @@ from libs.create_ml_io import JSON_EXT
 from libs.ustr import ustr
 from libs.hashableQListWidgetItem import HashableQListWidgetItem
 from libs.haze import *
-__appname__ = 'labelImg'
+from subprocess import call
+import time
+print("lo")
+#from threading import Thread
+# from __future__ import print_function
+# import libreducehaze
+#import matlab
+
+
+__appname__ = 'NDT Tool'
 
 
 class WindowMixin(object):
@@ -463,7 +473,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         self.tools = self.toolbar('Tools')
         self.actions.beginner = (#sol menu burasi buradan silince siliniyor
-            open, open_dir, change_save_dir, open_next_image, open_prev_image, verify, save, save_format, None, create, copy, delete, None,
+            open_dir, open_next_image, open_prev_image, verify, save, None, create, delete, None,
             zoom_in, zoom, zoom_out, fit_window, fit_width)
 
         self.actions.advanced = (
@@ -829,9 +839,25 @@ class MainWindow(QMainWindow, WindowMixin):
         #     pass
         self.canvas.load_pixmap(final_rgb)
         self.canvas.load_shapes([x[1] for x in list(self.items_to_shapes.items())])
-        
+
     @Enhance_decorator
     def haze_img(self, btn):
+        filename = self.m_img_list[self.cur_img_idx]
+        call("sh ~/Reducehaze/for_redistribution_files_only/run_Reducehaze.sh /home/ozan/Reducehaze/v910 %s" %(filename), shell=True)
+        
+        #call(["sh", "~/Reducehaze/for_redistribution_files_only/run_Reducehaze.sh", "/home/ozan/Reducehaze/v910", filename])
+        #call(["sh"," ~/Reducehaze/for_redistribution_files_only/run_Reducehaze.sh" ,"/home/ozan/Reducehaze/v910", "/home/ozan/Desktop/resler/train/9.jpg"], shell=True)
+        while(not os.path.exists(filename[:-4]+"_dehaze.jpg")):
+            print("waitingfor"+filename[:-4]+"_dehaze.jpg")
+            time.sleep(.025)
+       # hazed=Qimage(filename[:-4]+"_haze.jpg")
+        hazed=QImage(filename[:-4]+"_dehaze.jpg") #rotated geliyor ona bak
+        self.canvas.load_pixmap(QPixmap.fromImage(hazed))
+        
+        self.canvas.load_shapes([x[1] for x in list(self.items_to_shapes.items())])
+
+    @Enhance_decorator
+    def haze_img_old(self, btn):
         img=self.image_data.copy()
         img.invertPixels()
         cv_img=self.convertQImageToMat(img,4)
@@ -1203,6 +1229,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         # Fix bug: An  index error after select a directory when open a new file.
         unicode_file_path = ustr(file_path)
+        print("unicode is", unicode_file_path)
         unicode_file_path = os.path.abspath(unicode_file_path)
         # Tzutalin 20160906 : Add file list and dock to move faster
         # Highlight the file item
@@ -1216,6 +1243,7 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.m_img_list.clear()
 
         if unicode_file_path and os.path.exists(unicode_file_path):
+            print("mek")
             if LabelFile.is_label_file(unicode_file_path):
                 try:
                     self.label_file = LabelFile(unicode_file_path)
@@ -1258,6 +1286,7 @@ class MainWindow(QMainWindow, WindowMixin):
             self.paint_canvas()
             self.add_recent_file(self.file_path)
             self.toggle_actions(True)
+            print("file path show bounding in load", file_path)
             self.show_bounding_box_from_annotation_file(file_path)
 
             counter = self.counter_str()
@@ -1278,30 +1307,42 @@ class MainWindow(QMainWindow, WindowMixin):
         """
         return '[{} / {}]'.format(self.cur_img_idx + 1, self.img_count)
 
-    def show_bounding_box_from_annotation_file(self, file_path):
+    def show_bounding_box_from_annotation_file(self, file_path):#savedirle readdirin alakasi yok save butonuna tiklamadan label klasoru acilmaz
+        #burada direk resmin klasorune bakiyor
         if self.default_save_dir is not None:
             basename = os.path.basename(os.path.splitext(file_path)[0])
             xml_path = os.path.join(self.default_save_dir, basename + XML_EXT)
-            txt_path = os.path.join(self.default_save_dir, basename + TXT_EXT)
+            txt_path = os.path.join(self.default_save_dir, basename + TXT_EXT)#bu resmin pathi label dir yok
             json_path = os.path.join(self.default_save_dir, basename + JSON_EXT)
-
+            #dirname, only_file_name=os.path.split(self.file_path)
+            filename_without_extension,extension = os.path.split(txt_path)
+            txt_path=os.path.join(filename_without_extension, extension)
+            print("txt_path is :",txt_path) # os.path.join(filename_without_extension, "labeled", extension)
             """Annotation file priority:
             PascalXML > YOLO
-            """
+            """  #BURASI : default savedir varsa labeledden yoksa image folderdan txt cekiyordu, savedir yoksa da labeledden cektirdim
             if os.path.isfile(xml_path):
                 self.load_pascal_xml_by_filename(xml_path)
             elif os.path.isfile(txt_path):
-                self.load_yolo_txt_by_filename(txt_path)
+                print("bobo")
+                self.load_yolo_txt_by_filename(txt_path)# cuma aksam
             elif os.path.isfile(json_path):
                 self.load_create_ml_json_by_filename(json_path, file_path)
 
         else:
             xml_path = os.path.splitext(file_path)[0] + XML_EXT
             txt_path = os.path.splitext(file_path)[0] + TXT_EXT
+            filename_without_extension,extension = os.path.split(txt_path)
+            txt_path=os.path.join(filename_without_extension, "labeled", extension)
+            print("txt_path is ",txt_path)
             if os.path.isfile(xml_path):
                 self.load_pascal_xml_by_filename(xml_path)
+                
             elif os.path.isfile(txt_path):
-                self.load_yolo_txt_by_filename(txt_path)
+                print("bobo", txt_path)#BURAYI LABEL KLASORUNE CEVIR ARAYA LABEL GIRSIN
+                filename_without_extension,extension = os.path.split(txt_path)
+                print(os.path.join(filename_without_extension, "labeled", extension))
+                self.load_yolo_txt_by_filename(os.path.join(filename_without_extension, extension))
 
     def resizeEvent(self, event):
         if self.canvas and not self.image.isNull()\
@@ -1375,19 +1416,28 @@ class MainWindow(QMainWindow, WindowMixin):
         if self.may_continue():
             self.load_file(filename)
 
+    # def scan_all_images(self, folder_path):
+    #     extensions = ['.%s' % fmt.data().decode("ascii").lower() for fmt in QImageReader.supportedImageFormats()]
+    #     images = []
+
+    #     for root, dirs, files in os.walk(folder_path):
+    #         for file in files:
+    #             if file.lower().endswith(tuple(extensions)):
+    #                 relative_path = os.path.join(root, file)
+    #                 path = ustr(os.path.abspath(relative_path))
+    #                 images.append(path)
+    #     natural_sort(images, key=lambda x: x.lower())
+    #     return images
     def scan_all_images(self, folder_path):
         extensions = ['.%s' % fmt.data().decode("ascii").lower() for fmt in QImageReader.supportedImageFormats()]
         images = []
-
-        for root, dirs, files in os.walk(folder_path):
-            for file in files:
-                if file.lower().endswith(tuple(extensions)):
-                    relative_path = os.path.join(root, file)
-                    path = ustr(os.path.abspath(relative_path))
-                    images.append(path)
+        files=os.listdir(folder_path)     
+        for file in files:
+            if file.lower().endswith(tuple(extensions)):
+                print(file)
+                images.append(os.path.join(folder_path,file))
         natural_sort(images, key=lambda x: x.lower())
         return images
-
     def change_save_dir_dialog(self, _value=False):
         if self.default_save_dir is not None:
             path = ustr(self.default_save_dir)
@@ -1439,10 +1489,11 @@ class MainWindow(QMainWindow, WindowMixin):
             target_dir_path = ustr(default_open_dir_path)
         self.last_open_dir = target_dir_path
         self.import_dir_images(target_dir_path)
+        self.load_classes_txt(os.path.join(target_dir_path, "labeled", "classes.txt"))
 
     def import_dir_images(self, dir_path):
         if not self.may_continue() or not dir_path:
-            return
+            returns
 
         self.last_open_dir = dir_path
         self.dir_name = dir_path
@@ -1721,6 +1772,20 @@ class MainWindow(QMainWindow, WindowMixin):
                     else:
                         self.label_hist.append(line)
 
+    def load_classes_txt(self, classes_file):
+        print("clas bulundu")
+        if os.path.exists(classes_file) is True:
+            with codecs.open(classes_file, 'r', 'utf8') as f:
+                for line in f:
+                    line = line.strip()
+                    if self.label_hist is None:
+                        self.label_hist = [line]
+                    else:
+                        if line not in self.label_hist: #burada classes.tcti okumak lazim 
+                            self.label_hist.append(line)
+                        
+
+
     def load_pascal_xml_by_filename(self, xml_path):
         if self.file_path is None:
             return
@@ -1793,9 +1858,11 @@ def get_main_app(argv=None):
     Standard boilerplate Qt application code.
     Do everything but app.exec_() -- so that we can test the application in one thread
     """
+    print("go")
     if not argv:
         argv = []
     app = QApplication(argv)
+    print("po")
     app.setApplicationName(__appname__)
     app.setWindowIcon(new_icon("app"))
     # Tzutalin 201705+: Accept extra agruments to change predefined class file
@@ -1810,7 +1877,7 @@ def get_main_app(argv=None):
     args.image_dir = args.image_dir and os.path.normpath(args.image_dir)
     args.class_file = args.class_file and os.path.normpath(args.class_file)
     args.save_dir = args.save_dir and os.path.normpath(args.save_dir)
-
+    print("po")
     # Usage : labelImg.py image classFile saveDir
     win = MainWindow(args.image_dir,
                      args.class_file,
@@ -1867,10 +1934,15 @@ def paint_save(self, image):
             self.setPalette(pal)
         print("komo")
         q.end()
+
 def main():
     """construct main app and run it"""
+    print("main")
     app, _win = get_main_app(sys.argv)
     return app.exec_()
 
 if __name__ == '__main__':
+
     sys.exit(main())
+# my_libreducehaze = libreducehaze.initialize()
+# my_libreducehaze.terminate()
