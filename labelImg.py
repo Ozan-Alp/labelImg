@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#from __future__ import print_function
+from __future__ import print_function
+import threading
+import concurrent.futures #threadpoolexecutor
+import logging# mega loglama library ogren
+logging.basicConfig(format="%(message)s", level=0)
+import multiprocessing
 import argparse
 import codecs
 import distutils.spawn
@@ -62,8 +67,8 @@ print("lo")
 # from __future__ import print_function
 # import libreducehaze
 #import matlab
-
-
+#global imwrite_flag
+imwrite_flag= False
 __appname__ = 'NDT Tool'
 
 
@@ -89,11 +94,15 @@ class WindowMixin(object):
 
 class MainWindow(QMainWindow, WindowMixin):
     FIT_WINDOW, FIT_WIDTH, MANUAL_ZOOM = list(range(3))
-
-    def __init__(self, default_filename=None, default_prefdef_class_file=None, default_save_dir=None):
+    def __del__(self):
+        self.proc.join()
+        print("joined")
+    def __init__(self, image_queue, flag, proc=None, default_filename=None, default_prefdef_class_file=None, default_save_dir=None):
         super(MainWindow, self).__init__()
         self.setWindowTitle(__appname__)
-
+        self.image_queue=image_queue
+        self.flag=flag
+        self.proc=proc
         # Load setting in the main thread
         self.settings = Settings()
         self.settings.load()
@@ -842,20 +851,43 @@ class MainWindow(QMainWindow, WindowMixin):
 
     @Enhance_decorator
     def haze_img(self, btn):
+        
         filename = self.m_img_list[self.cur_img_idx]
-        call("sh ~/Reducehaze/for_redistribution_files_only/run_Reducehaze.sh /home/ozan/Reducehaze/v910 %s" %(filename), shell=True)
-        
-        #call(["sh", "~/Reducehaze/for_redistribution_files_only/run_Reducehaze.sh", "/home/ozan/Reducehaze/v910", filename])
-        #call(["sh"," ~/Reducehaze/for_redistribution_files_only/run_Reducehaze.sh" ,"/home/ozan/Reducehaze/v910", "/home/ozan/Desktop/resler/train/9.jpg"], shell=True)
-        while(not os.path.exists(filename[:-4]+"_dehaze.jpg")):
+        self.image_queue.put(filename)
+        while(self.flag.value==0):#
+            print("flag is %d waiting" %(self.flag.value))
             print("waitingfor"+filename[:-4]+"_dehaze.jpg")
-            time.sleep(.025)
-       # hazed=Qimage(filename[:-4]+"_haze.jpg")
-        hazed=QImage(filename[:-4]+"_dehaze.jpg") #rotated geliyor ona bak
-        self.canvas.load_pixmap(QPixmap.fromImage(hazed))
-        
+            time.sleep(.25)
+        print("corrupt?0")
+        hazed=QImage(filename[:-4]+"_dehaze.jpg") 
+        print("corrupt?1")
+        self.canvas.load_pixmap(QPixmap.fromImage(hazed)) 
+        print("corrupt?2")
         self.canvas.load_shapes([x[1] for x in list(self.items_to_shapes.items())])
+        print("flag is ",self.flag.value)
+        self.flag.value=0
+        print("set to false")
 
+
+    def read_flag(self):
+        global imwrite_flag
+        return imwrite_flag
+    # def haze_img(self, btn):
+    #     filename = self.m_img_list[self.cur_img_idx]
+    #     call("sh ~/Reducehaze/for_redistribution_files_only/run_Reducehaze.sh /home/ozan/Reducehaze/v910 %s" %(filename), shell=True)
+        
+    #     #call(["sh", "~/Reducehaze/for_redistribution_files_only/run_Reducehaze.sh", "/home/ozan/Reducehaze/v910", filename])
+    #     #call(["sh"," ~/Reducehaze/for_redistribution_files_only/run_Reducehaze.sh" ,"/home/ozan/Reducehaze/v910", "/home/ozan/Desktop/resler/train/9.jpg"], shell=True)
+    #     while(not os.path.exists(filename[:-4]+"_dehaze.jpg")):
+    #         print("waitingfor"+filename[:-4]+"_dehaze.jpg")
+    #         time.sleep(.025)
+    #    # hazed=Qimage(filename[:-4]+"_haze.jpg")
+    #     hazed=QImage(filename[:-4]+"_dehaze.jpg") #rotated geliyor ona bak
+    #     self.canvas.load_pixmap(QPixmap.fromImage(hazed))
+        
+    #     self.canvas.load_shapes([x[1] for x in list(self.items_to_shapes.items())])
+
+ 
     @Enhance_decorator
     def haze_img_old(self, btn):
         img=self.image_data.copy()
@@ -1662,6 +1694,7 @@ class MainWindow(QMainWindow, WindowMixin):
             self.canvas.save_pixmap=QPixmap.fromImage(self.image_data)
             self.canvas.paint_save(self.canvas.save_pixmap)
             print("kutulu resim kaydetme", annotation_file_path)
+            #save yazdirma resim kaydetme bu satir
             self.canvas.save_pixmap.save(annotation_file_path+".jpg", format='jpg')# quality ve format secilebilir, bos kalirsa formati uzanti stringinden cekiyor
             self.set_clean()
             self.statusBar().showMessage('Saved to  %s' % annotation_file_path)
@@ -1853,7 +1886,7 @@ def read(filename, default=None):
         return default
 
 
-def get_main_app(argv=None):
+def get_main_app(image_queue,flag, proc, argv=None):
     """
     Standard boilerplate Qt application code.
     Do everything but app.exec_() -- so that we can test the application in one thread
@@ -1879,7 +1912,7 @@ def get_main_app(argv=None):
     args.save_dir = args.save_dir and os.path.normpath(args.save_dir)
     print("po")
     # Usage : labelImg.py image classFile saveDir
-    win = MainWindow(args.image_dir,
+    win = MainWindow(image_queue, flag, proc, args.image_dir,
                      args.class_file,
                      args.save_dir)
     win.show()
@@ -1935,14 +1968,52 @@ def paint_save(self, image):
         print("komo")
         q.end()
 
+def matlab_dehaze(img_queue, flag):
+    flag.value=0
+    logging.info("dehaze main process")
+    import importlib.util
+    import os
+    spec=importlib.util.spec_from_file_location("gfg","articles/gfg.py")
+    # Set the LD_LIBRARY_PATH for this process. The particular value may
+    # differ, depending on your installation.
+    os.environ["LD_LIBRARY_PATH"] = "/home/ozan/libreducehaze/v910/runtime/glnxa64:" \
+    "/home/ozan/libreducehaze/v910/bin/glnxa64: /home/ozan/libreducehaze/v910/sys/os/glnxa64:" \
+    "/home/ozan/libreducehaze/v910/sys/opengl/lib/glnxa64:"
+    # Import these modules AFTER setting up the environment variables.
+    import libreducehaze
+   
+    instance_haze=libreducehaze.initialize()
+    while True:
+        im_name= img_queue.get()  # queue get ve putta kendini lockluyor, get item ceker set item girer
+        instance_haze.reducehaze(im_name, nargout=0)#opencv.
+        
+        flag.value=1
+        print("set to true")
+        
+    # if event.is_set():
+    #     logging.info("Dukkan kapandi ")
+    #     libreducehaze.terminate()
+
+imwrite_flag = multiprocessing.Value('i', 0)
 def main():
+    img_queue=multiprocessing.Queue(10)
+
+    p1 = multiprocessing.Process(target = matlab_dehaze,args=(img_queue,imwrite_flag,))
+    p1.daemon = True
+    p1.start()
+    
     """construct main app and run it"""
     print("main")
-    app, _win = get_main_app(sys.argv)
-    return app.exec_()
+    app, _win = get_main_app(img_queue,imwrite_flag, p1, sys.argv)
+
+    return app.exec_(), p1.terminate()
 
 if __name__ == '__main__':
-
+   
+    
+    
     sys.exit(main())
+    
 # my_libreducehaze = libreducehaze.initialize()
 # my_libreducehaze.terminate()
+
