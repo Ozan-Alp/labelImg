@@ -305,7 +305,6 @@ class Canvas(QWidget):
         # del shape.line_color
         if copy:
             self.shapes.append(shape)
-            self.selected_shape.selected = False
             self.selected_shape = shape
             self.repaint()
         else:
@@ -474,6 +473,7 @@ class Canvas(QWidget):
             return shape
 
     def copy_selected_shape(self):
+        print("476")
         if self.selected_shape:
             shape = self.selected_shape.copy()
             self.de_select_shape()

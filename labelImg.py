@@ -169,8 +169,8 @@ class MainWindow(QMainWindow, WindowMixin):
         self.edit_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
         # Add some of widgets to list_layout
-        list_layout.addWidget(self.edit_button)
-        list_layout.addWidget(self.diffc_button)
+        #list_layout.addWidget(self.edit_button)
+        #list_layout.addWidget(self.diffc_button)
         list_layout.addWidget(use_default_label_container)
 
         # Create and add combobox for showing unique labels in group
@@ -482,7 +482,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         self.tools = self.toolbar('Tools')
         self.actions.beginner = (#sol menu burasi buradan silince siliniyor
-            open_dir, open_next_image, open_prev_image, verify, save, None, create, delete, None,
+            open_dir, open_next_image, open_prev_image, save, None, create, delete, None,
             zoom_in, zoom, zoom_out, fit_window, fit_width)
 
         self.actions.advanced = (
@@ -797,9 +797,13 @@ class MainWindow(QMainWindow, WindowMixin):
     def file_item_double_clicked(self, item=None):
         self.cur_img_idx = self.m_img_list.index(ustr(item.text()))
         filename = self.m_img_list[self.cur_img_idx]
+        #self.selected_shape = None #oz
         if filename:
+            print("ol1")
             self.load_file(filename)
-    
+            print("ol3")
+
+
     def Enhance_decorator(fonk):
         def wrapper(self, btn):
             if btn.isChecked():
@@ -1002,6 +1006,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.update_combo_box()
 
     def load_labels(self, shapes):
+        self.canvas.selected_shape=None
         s = []
         for label, points, line_color, fill_color, difficult in shapes:
             shape = Shape(label=label)
@@ -1029,8 +1034,9 @@ class MainWindow(QMainWindow, WindowMixin):
 
             self.add_label(shape)
         self.update_combo_box()
+        print("k1")
         self.canvas.load_shapes(s)
-
+        print("k2")
     def update_combo_box(self):
         # Get the unique labels and add them to the Combobox.
         items_text_list = [str(self.label_list.item(i).text()) for i in range(self.label_list.count())]
@@ -1108,7 +1114,9 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def label_selection_changed(self):
         item = self.current_item()
+        
         if item and self.canvas.editing():
+            print("bug sebebi burasi degil")
             self._no_selection_slot = True
             self.canvas.select_shape(self.items_to_shapes[item])
             shape = self.items_to_shapes[item]
@@ -1251,7 +1259,12 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def load_file(self, file_path=None):
         """Load the specified file, or the last opened file if None."""
+        print("1",self.canvas.selected_shape)
+        if self.canvas.selected_shape:
+            self.canvas.selected_shape.selected=False
+            self.canvas.selected_shape= None
         self.reset_state()
+        #self.selected_shape.selected = False
         self.canvas.setEnabled(False)
         if file_path is None:
             file_path = self.settings.get(SETTING_FILENAME)
@@ -1271,6 +1284,7 @@ class MainWindow(QMainWindow, WindowMixin):
                 file_widget_item = self.file_list_widget.item(index)
                 file_widget_item.setSelected(True)
             else:
+                print("liste silindi", self.file_list_widget.count(), unicode_file_path)
                 self.file_list_widget.clear()
                 self.m_img_list.clear()
 
@@ -1296,7 +1310,7 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.image_data = read(unicode_file_path, None)
                 self.label_file = None
                 self.canvas.verified = False
-
+            print("2",self.canvas.selected_shape)
             if isinstance(self.image_data, QImage):
                 image = self.image_data
             else:
@@ -1313,6 +1327,7 @@ class MainWindow(QMainWindow, WindowMixin):
             if self.label_file:
                 self.load_labels(self.label_file.shapes)
             self.set_clean()
+            print(self.canvas.selected_shape!=None)
             self.canvas.setEnabled(True)
             self.adjust_scale(initial=True)
             self.paint_canvas()
@@ -1320,16 +1335,20 @@ class MainWindow(QMainWindow, WindowMixin):
             self.toggle_actions(True)
             print("file path show bounding in load", file_path)
             self.show_bounding_box_from_annotation_file(file_path)
-
+            print("3",self.canvas.selected_shape)
             counter = self.counter_str()
             self.setWindowTitle(__appname__ + ' ' + file_path + ' ' + counter)
 
             # Default : select last item if there is at least one item
             if self.label_list.count():
+                print("count",self.label_list.count())
+                print("3.25",self.canvas.selected_shape)
                 self.label_list.setCurrentItem(self.label_list.item(self.label_list.count() - 1))
+                print("3.5",self.canvas.selected_shape)
                 self.label_list.item(self.label_list.count() - 1).setSelected(True)
 
             self.canvas.setFocus(True)
+            print("4",self.canvas.selected_shape)
             return True
         return False
 
@@ -1513,10 +1532,10 @@ class MainWindow(QMainWindow, WindowMixin):
             default_open_dir_path = self.last_open_dir
         else:
             default_open_dir_path = os.path.dirname(self.file_path) if self.file_path else '.'
-        if silent != True:
-            target_dir_path = ustr(QFileDialog.getExistingDirectory(self,
+        if silent != True:#QFileDialog herzaman / ile string kaydediyor, windowsta patlamamasi icin os path ile duzelttim
+            target_dir_path = os.path.normpath(ustr(QFileDialog.getExistingDirectory(self,
                                                                     '%s - Open Directory' % __appname__, default_open_dir_path,
-                                                                    QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks))
+                                                                    QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)))
         else:
             target_dir_path = ustr(default_open_dir_path)
         self.last_open_dir = target_dir_path
