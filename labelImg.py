@@ -116,7 +116,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         # Save as Pascal voc xml
         self.default_save_dir = None#default_save_dir
-        self.label_file_format = settings.get(SETTING_LABEL_FILE_FORMAT, LabelFileFormat.PASCAL_VOC)
+        self.label_file_format = LabelFileFormat.YOLO#settings.get(SETTING_LABEL_FILE_FORMAT, LabelFileFormat.YOLO)
 
         # For loading all image under a directory
         self.m_img_list = []
@@ -1050,6 +1050,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def save_labels(self, annotation_file_path):
         annotation_file_path = ustr(annotation_file_path)
+        print("label_save annotation file path", annotation_file_path) #kotnrol ettim .ext olmadan full resim pathi
         if self.label_file is None:
             self.label_file = LabelFile()
             self.label_file.verified = self.canvas.verified
@@ -1695,13 +1696,14 @@ class MainWindow(QMainWindow, WindowMixin):
         #print("filenamewoext",filename_without_extension)
         #os.path joinde falan ortadaki itemlere / koyarsan sol tarafi siler direk /la baslayan itemden baslas absolute pathi resetler
         
-        dlg.selectFile(filename_without_extension.split('/')[-1])#absolute path verince dialog folderini oraya cekiyor, vermezsen open_dialog_pathtaki yeri aciyor,
+        dlg.selectFile(filename_without_extension.split(os.sep)[-1])#absolute path verince dialog folderini oraya cekiyor, vermezsen open_dialog_pathtaki yeri aciyor,
         #burada sadece uzantisiz resmin adini sectiriyorum
         dlg.setOption(QFileDialog.DontUseNativeDialog, False)
         if dlg.exec_():
             full_file_path = ustr(dlg.selectedFiles()[0])#(opendialog+selectfile)
             print("save icin kullanilan final path",full_file_path) # uzanti haric full path
             if remove_ext:
+                print("split savepath ", os.path.splitext(full_file_path)[0])
                 return os.path.splitext(full_file_path)[0]  # Return file path without the extension.
             else:
                 return full_file_path
