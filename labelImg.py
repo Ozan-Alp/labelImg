@@ -1657,8 +1657,8 @@ class MainWindow(QMainWindow, WindowMixin):
                 saved_path = os.path.join(ustr(self.default_save_dir), saved_file_name)
                 print("1476",self.default_save_dir)
                 #self._save_file(saved_path)
-                self._save_file(self.save_file_dialog(remove_ext=False)) # uzanti haric full path giriyor
-
+                self._save_file(self.save_file_dialog(remove_ext=True)) # uzanti haric full path giriyor  or remove_ext=True linuxta textboxa extension eklenmiyor ama windowsta ekleniyor
+#DIKKAT WINDOWS QFileDIalogda filename extension da ekleniyor ama kodda eklenmemeli, oyuzden remove ext acik olmali
 
         else:
             image_file_dir = os.path.dirname(self.file_path)
@@ -1668,7 +1668,7 @@ class MainWindow(QMainWindow, WindowMixin):
             saved_path = os.path.join(image_file_dir, saved_file_name)
             # self._save_file(saved_path if self.label_file
             #                 else self.save_file_dialog(remove_ext=False))
-            self._save_file(self.save_file_dialog(remove_ext=False)) # uzanti haric full path giriyor
+            self._save_file(self.save_file_dialog(remove_ext=False)) # uzanti haric full path giriyor 
             
 
     def save_file_as(self, _value=False):
@@ -1695,7 +1695,7 @@ class MainWindow(QMainWindow, WindowMixin):
         #filename_without_extension = os.path.join(self.default_save_dir,)[0]
         #print("filenamewoext",filename_without_extension)
         #os.path joinde falan ortadaki itemlere / koyarsan sol tarafi siler direk /la baslayan itemden baslas absolute pathi resetler
-        
+        print("file wo ext',filename_without_extension)
         dlg.selectFile(filename_without_extension.split(os.sep)[-1])#absolute path verince dialog folderini oraya cekiyor, vermezsen open_dialog_pathtaki yeri aciyor,
         #burada sadece uzantisiz resmin adini sectiriyorum
         dlg.setOption(QFileDialog.DontUseNativeDialog, False)
