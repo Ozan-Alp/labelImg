@@ -84,7 +84,7 @@ class LabelFile(object):
 
     def save_yolo_format(self, filename, shapes, image_path, image_data, class_list,
                          line_color=None, fill_color=None, database_src=None):
-        print("folderpath",image_path)
+        print("imagepath",image_path)
         img_folder_path = os.path.dirname(image_path)
         print("folderpath",img_folder_path)
         img_folder_name = os.path.split(img_folder_path)[-1]

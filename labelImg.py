@@ -1090,6 +1090,13 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.label_file.save(annotation_file_path, shapes, self.file_path, self.image_data,
                                      self.line_color.getRgb(), self.fill_color.getRgb())
             print('Image:{0} -> Annotation:{1}'.format(self.file_path, annotation_file_path))
+            old_image_path=self.m_img_list[self.cur_img_idx]
+            print("olol", old_image_path)
+            foldername=os.path.dirname(old_image_path)  # only old images directory without img name or extension
+            print("olim folder", foldername)
+            filename=os.path.splitext(os.path.basename(annotation_file_path))[0]#only new images name without directory or extension
+            print("FILENAME", filename)
+            os.rename(self.m_img_list[self.cur_img_idx],os.path.join(foldername,filename+".jpg"))
             return True
         except LabelFileError as e:
             self.error_message(u'Error saving label data', u'<b>%s</b>' % e)
@@ -1695,7 +1702,7 @@ class MainWindow(QMainWindow, WindowMixin):
         #filename_without_extension = os.path.join(self.default_save_dir,)[0]
         #print("filenamewoext",filename_without_extension)
         #os.path joinde falan ortadaki itemlere / koyarsan sol tarafi siler direk /la baslayan itemden baslas absolute pathi resetler
-        print("file wo ext',filename_without_extension)
+        print("file wo ext',filename_without_extension")
         dlg.selectFile(filename_without_extension.split(os.sep)[-1])#absolute path verince dialog folderini oraya cekiyor, vermezsen open_dialog_pathtaki yeri aciyor,
         #burada sadece uzantisiz resmin adini sectiriyorum
         dlg.setOption(QFileDialog.DontUseNativeDialog, False)
