@@ -218,11 +218,15 @@ class MainWindow(QMainWindow, WindowMixin):
         self.enhancement_haze = QRadioButton("Haze reduction")
         self.enhancement_haze.toggled.connect(lambda:self.haze_img(self.enhancement_haze))
         self.radio_group.addButton(self.enhancement_haze)
+        self.enhancement_hsv = QRadioButton("Saturation")
+        self.enhancement_hsv.toggled.connect(lambda:self.hsv_img(self.enhancement_hsv))
+        self.radio_group.addButton(self.enhancement_hsv)
         enhancement_layout = QVBoxLayout()
         enhancement_layout.addWidget(self.enhancement_original)
         enhancement_layout.addWidget(self.enhancement_invert)
         enhancement_layout.addWidget(self.enhancement_hist)
         enhancement_layout.addWidget(self.enhancement_haze)
+        enhancement_layout.addWidget(self.enhancement_hsv)
         enhancement_container = QWidget()
         enhancement_container.setLayout(enhancement_layout)
         self.img_dock= QDockWidget("Enhancements", self)
@@ -801,6 +805,7 @@ class MainWindow(QMainWindow, WindowMixin):
         if filename:
             print("ol1")
             self.load_file(filename)
+            self.enhancement_original.setChecked(True)
             print("ol3")
 
 
@@ -845,7 +850,7 @@ class MainWindow(QMainWindow, WindowMixin):
         #     for col in range(w):
         #         hist[gray.pixel(h,w)]=hist[gray.pixel(h,w)]+1
         equ = cv2.equalizeHist(cv_gray)
-        final_rgb=self.convert_nparray_to_QPixmap(equ)
+        final_rgb=self.convert_nparray_to_QPixmap(equ, format=QImage.Format_Grayscale8)
         lobo=np.hstack((cv_gray,equ))
         # cv2.imshow("lol", lobo)
         # if cv2.waitKey(0)& 0xFF == ord('q'):
@@ -854,16 +859,46 @@ class MainWindow(QMainWindow, WindowMixin):
         self.canvas.load_shapes([x[1] for x in list(self.items_to_shapes.items())])
 
     @Enhance_decorator
+    def hsv_img(self, btn):
+        saturation=True
+        rgb_img = self.image_data.copy()
+        rgb_img = rgb_img.convertToFormat(QImage.Format_RGB888)
+       
+        cv_bgr= self.convertQImageToMat(rgb_img,3)
+        #print(cv_bgr[500,500])
+        cv_rgb = cv_bgr#cv2.cvtColor(cv_bgr, cv2.COLOR_BGR2RGB)
+        cv_hsv=cv2.cvtColor(cv_rgb, cv2.COLOR_RGB2HSV)
+        #print(cv_hsv[500,500])
+        print("new shape",cv_hsv.shape)
+        # cv2.namedWindow("result", cv2.WINDOW_NORMAL)
+        # cv2.resizeWindow('result', 1200,900)
+        # cv2.imshow("result", cv_hsv)
+        # cv2.waitKey(0)
+        # if cv2.waitKey(0)& 0xFF == ord('q'):
+        #     pass
+        if saturation:
+          #  saturation_channel=np.dstack((cv_hsv[:,:,1],)*3)
+            s=cv_hsv[:,:,1].copy()
+            final_hsv=self.convert_nparray_to_QPixmap(s, ndims=1, format=QImage.Format_Grayscale8)
+            self.canvas.load_pixmap(final_hsv)
+        else:
+            final_hsv=self.convert_nparray_to_QPixmap(cv_hsv, ndims=3, format=QImage.Format_RGB888)
+            self.canvas.load_pixmap(final_hsv)
+    @Enhance_decorator
     def haze_img(self, btn):
         
         filename = self.m_img_list[self.cur_img_idx]
-        self.image_queue.put(filename)
-        while(self.flag.value==0):#
-            print("flag is %d waiting" %(self.flag.value))
-            print("waitingfor"+filename[:-4]+"_dehaze.jpg")
-            time.sleep(.25)
+        file_wo_extension=os.path.splitext(filename)[0]
+        print(filename)
+        if not os.path.exists(file_wo_extension+"_dehaze.jpg"):
+            self.image_queue.put(filename)
+            
+            while(self.flag.value==0):#
+                print("flag is %d waiting" %(self.flag.value))
+                print("waitingfor"+file_wo_extension+"_dehaze.jpg")
+                time.sleep(.25)
         print("corrupt?0")
-        hazed=QImage(filename[:-4]+"_dehaze.jpg") 
+        hazed=QImage(file_wo_extension+"_dehaze.jpg") 
         print("corrupt?1")
         self.canvas.load_pixmap(QPixmap.fromImage(hazed)) 
         print("corrupt?2")
@@ -914,20 +949,22 @@ class MainWindow(QMainWindow, WindowMixin):
         width = incomingImage.width()
         height = incomingImage.height()
         print("h, w gray", height, width)
-        ptr = incomingImage.bits()
+        ptr = incomingImage.bits()#icinde scanline yapiyor o da 32bitlik data tutuyor 4bytesin kati olur
       
-        print("len gray", incomingImage.bytesPerLine())
-        dif=(4-(ndims*width)%4)%4  #8in katina tamamlamak icin eklenen byte sayisi icin dimensionla carpmak lazim
+        print("len gray", incomingImage.bytesPerLine())#bytesperlinei 4un multiplei yapiyor oyuzden width 8in katina tamamlanmali
+        dif=(4-(ndims*width)%4)%4  #4n (ya da 8?)katina tamamlamak icin eklenen byte sayisi icin dimensionla carpmak lazim
         print("dif ",dif)# burada pisli kseyler var tam pixel doldurmaya bilir alttaki reshape patlicaktir, bizim direk eklenen pixeli cikarmamiz lazim
-        ptr.setsize((width+dif)*height*ndims)#bits satirlari 4un katina tamamliyor oyuzdne her satirda 2 pixel kayiyordu cerceveyi 2 pixel genisletip sonra son 2 sutunu sildim
-        arr = np.array(ptr, np.uint8).reshape(height,width+dif//ndims,ndims)[:,:width,:]  #eklenen byte saysinin resimdeki pixel kaymasini hesaplamak icin ndimse bolmek gerekir
+        ptr.setsize(incomingImage.bytesPerLine()*height)#bits satirlari 4un katina tamamliyor oyuzdne her satirda 2 pixel kayiyordu cerceveyi 2 pixel genisletip sonra son 2 sutunu sildim
+        arr=np.array(ptr, np.uint8).reshape(-1,incomingImage.bytesPerLine())[:,:width*ndims]
+        arr=np.array(arr, np.uint8).reshape(height,width,ndims)
+        #arr = np.array(ptr, np.uint8).reshape(height,width+dif//ndims,ndims)[:,:width,:]  #eklenen byte saysinin resimdeki pixel kaymasini hesaplamak icin ndimse bolmek gerekir
         arr = np.squeeze(arr)
         # cv2.imshow("lol", arr)
         # if cv2.waitKey(0)& 0xFF == ord('q'):
         #     pass
         print("arr",arr.shape)
         return arr
-    def convert_nparray_to_QPixmap(self, img, ndims=1, format=QImage.Format_Grayscale8, invert=False):
+    def convert_nparray_to_QPixmap(self, img, format, ndims=1, invert=False):#format==QImage.Format_Grayscale8
         h,w = img.shape[:2] #grayscale
         #Convert resulting image to pixmap
         if img.ndim == 1:
@@ -1095,8 +1132,11 @@ class MainWindow(QMainWindow, WindowMixin):
             foldername=os.path.dirname(old_image_path)  # only old images directory without img name or extension
             print("olim folder", foldername)
             filename=os.path.splitext(os.path.basename(annotation_file_path))[0]#only new images name without directory or extension
-            print("FILENAME", filename)
-            os.rename(self.m_img_list[self.cur_img_idx],os.path.join(foldername,filename+".jpg"))
+            print("only image FILENAME", filename)
+            new_name=os.path.join(foldername,filename+".jpg")
+            os.rename(self.m_img_list[self.cur_img_idx],new_name)
+            self.file_list_widget.selectedItems()[0].setText(new_name)
+            self.m_img_list[self.cur_img_idx]= new_name
             return True
         except LabelFileError as e:
             self.error_message(u'Error saving label data', u'<b>%s</b>' % e)

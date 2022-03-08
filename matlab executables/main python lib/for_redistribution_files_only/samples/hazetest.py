@@ -8,7 +8,6 @@ Refer to the MATLAB Compiler SDK documentation for more information.
 
 from __future__ import print_function
 import libreducehaze
-import matlab
 
 my_libreducehaze = libreducehaze.initialize()
 
