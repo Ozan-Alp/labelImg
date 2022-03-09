@@ -1134,9 +1134,12 @@ class MainWindow(QMainWindow, WindowMixin):
             filename=os.path.splitext(os.path.basename(annotation_file_path))[0]#only new images name without directory or extension
             print("only image FILENAME", filename)
             new_name=os.path.join(foldername,filename+".jpg")
-            os.rename(self.m_img_list[self.cur_img_idx],new_name)
-            self.file_list_widget.selectedItems()[0].setText(new_name)
-            self.m_img_list[self.cur_img_idx]= new_name
+            if new_name != self.file_path:
+                print("farkli")
+                os.rename(self.m_img_list[self.cur_img_idx],new_name)
+                self.file_list_widget.selectedItems()[0].setText(new_name)
+                self.m_img_list[self.cur_img_idx]= new_name
+                self.file_path = new_name
             return True
         except LabelFileError as e:
             self.error_message(u'Error saving label data', u'<b>%s</b>' % e)
@@ -1604,7 +1607,8 @@ class MainWindow(QMainWindow, WindowMixin):
         for imgPath in self.m_img_list:
             item = QListWidgetItem(imgPath)
             self.file_list_widget.addItem(item)
-
+        first_item=self.file_list_widget.item(self.cur_img_idx)#klasor secince ilk itemi yukleyip qwidgetlistte secsin
+        first_item.setSelected(True)
     def verify_image(self, _value=False):
         # Proceeding next image without dialog if having any label
         if self.file_path is not None:
@@ -1672,6 +1676,8 @@ class MainWindow(QMainWindow, WindowMixin):
         if self.file_path is None:
             filename = self.m_img_list[0]
             self.cur_img_idx = 0
+
+                
         else:
             if self.cur_img_idx + 1 < self.img_count:
                 self.cur_img_idx += 1
@@ -1761,7 +1767,7 @@ class MainWindow(QMainWindow, WindowMixin):
             #self.custompix.pixmap = self.image_data.copy()
             self.canvas.save_pixmap=QPixmap.fromImage(self.image_data)
             self.canvas.paint_save(self.canvas.save_pixmap)
-            print("kutulu resim kaydetme", annotation_file_path)
+            print("kutulu resim kaydetme(extensionsiz isim)", annotation_file_path)#
             #save yazdirma resim kaydetme bu satir
             self.canvas.save_pixmap.save(annotation_file_path+".jpg", format='jpg')# quality ve format secilebilir, bos kalirsa formati uzanti stringinden cekiyor
             self.set_clean()
