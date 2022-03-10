@@ -39,7 +39,7 @@ def txt2csv(location, training_dir, path_prefix):
             temp_csv = [str(training_dir)]
 
             # gs://prefix/name/{image_name}
-            cloud_path = f"{path_prefix}/{os.path.splitext(file)[0]}.jpg"
+            cloud_path = f"{path_prefix}/{file.rsplit('.', 1)[0]}.jpg"
             temp_csv.append(cloud_path)
 
             # Class label
@@ -98,7 +98,7 @@ def xml2csv(location, training_dir, path_prefix):
             temp_csv = [str(training_dir)]
 
             # gs://prefix/name/{image_name}
-            cloud_path = f"{path_prefix}/{os.path.splitext(file)[0]}.jpg"
+            cloud_path = f"{path_prefix}/{file.rsplit('.', 1)[0]}.jpg"
             temp_csv.append(cloud_path)
 
             # Class label

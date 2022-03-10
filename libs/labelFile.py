@@ -57,7 +57,7 @@ class LabelFile(object):
         img_folder_path = os.path.dirname(image_path)
         img_folder_name = os.path.split(img_folder_path)[-1]
         img_file_name = os.path.basename(image_path)
-        # imgFileNameWithoutExt = os.path.splitext(img_file_name)[0]
+        # imgFileNameWithoutExt = img_file_name.rsplit('.', 1)[0]
         # Read from file path because self.imageData might be empty if saving to
         # Pascal format
         if isinstance(image_data, QImage):
@@ -91,7 +91,7 @@ class LabelFile(object):
         print("foldername",img_folder_name)
         img_file_name = os.path.basename(image_path)
         print("img_name",img_file_name)
-        # imgFileNameWithoutExt = os.path.splitext(img_file_name)[0]
+        # imgFileNameWithoutExt = img_file_name.rsplit('.', 1)[0]
         # Read from file path because self.imageData might be empty if saving to
         # Pascal format
         if isinstance(image_data, QImage):
@@ -150,7 +150,7 @@ class LabelFile(object):
 
     @staticmethod
     def is_label_file(filename):
-        file_suffix = os.path.splitext(filename)[1].lower()
+        file_suffix = filename.rsplit('.', 1)[1].lower()
         return file_suffix == LabelFile.suffix
 
     @staticmethod

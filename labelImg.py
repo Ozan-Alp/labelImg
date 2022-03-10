@@ -888,8 +888,8 @@ class MainWindow(QMainWindow, WindowMixin):
     def haze_img(self, btn):
         
         filename = self.m_img_list[self.cur_img_idx]
-        file_wo_extension=os.path.splitext(filename)[0]
-        print(filename)
+        file_wo_extension=filename.rsplit('.', 1)[0]
+        print("matlaba godnerilen name",filename)
         if not os.path.exists(file_wo_extension+"_dehaze.jpg"):
             self.image_queue.put(filename)
             
@@ -1127,19 +1127,21 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.label_file.save(annotation_file_path, shapes, self.file_path, self.image_data,
                                      self.line_color.getRgb(), self.fill_color.getRgb())
             print('Image:{0} -> Annotation:{1}'.format(self.file_path, annotation_file_path))
-            old_image_path=self.m_img_list[self.cur_img_idx]
+            old_image_path=self.m_img_list[self.cur_img_idx]#self.img_listteki itemelr extensionsuz
             print("olol", old_image_path)
             foldername=os.path.dirname(old_image_path)  # only old images directory without img name or extension
             print("olim folder", foldername)
-            filename=os.path.splitext(os.path.basename(annotation_file_path))[0]#only new images name without directory or extension
+            filename=os.path.basename(annotation_file_path).rsplit('.', 1)[0]#only new images name without directory or extension
             print("only image FILENAME", filename)
-            new_name=os.path.join(foldername,filename+".jpg")
-            if new_name != self.file_path:
+            new_name=os.path.join(foldername,filename)
+            if new_name+".jpg" != self.file_path:
                 print("farkli")
-                os.rename(self.m_img_list[self.cur_img_idx],new_name)
-                self.file_list_widget.selectedItems()[0].setText(new_name)
-                self.m_img_list[self.cur_img_idx]= new_name
-                self.file_path = new_name
+                print("eski ad",self.m_img_list[self.cur_img_idx])
+                print("yeni ad",new_name+".jpg")
+                os.rename(self.m_img_list[self.cur_img_idx],new_name+".jpg")
+                self.file_list_widget.selectedItems()[0].setText(new_name+".jpg")
+                self.m_img_list[self.cur_img_idx]= new_name+".jpg"
+                self.file_path = new_name+".jpg"
             return True
         except LabelFileError as e:
             self.error_message(u'Error saving label data', u'<b>%s</b>' % e)
@@ -1412,13 +1414,13 @@ class MainWindow(QMainWindow, WindowMixin):
     def show_bounding_box_from_annotation_file(self, file_path):#savedirle readdirin alakasi yok save butonuna tiklamadan label klasoru acilmaz
         #burada direk resmin klasorune bakiyor
         if self.default_save_dir is not None:
-            basename = os.path.basename(os.path.splitext(file_path)[0])
+            basename = os.path.basename(file_path.rsplit('.', 1)[0])
             xml_path = os.path.join(self.default_save_dir, basename + XML_EXT)
             txt_path = os.path.join(self.default_save_dir, basename + TXT_EXT)#bu resmin pathi label dir yok
             json_path = os.path.join(self.default_save_dir, basename + JSON_EXT)
             #dirname, only_file_name=os.path.split(self.file_path)
             filename_without_extension,extension = os.path.split(txt_path)
-            txt_path=os.path.join(filename_without_extension, extension)
+            #txt_path=os.path.join(filename_without_extension, extension)
             print("txt_path is :",txt_path) # os.path.join(filename_without_extension, "labeled", extension)
             """Annotation file priority:
             PascalXML > YOLO
@@ -1432,8 +1434,8 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.load_create_ml_json_by_filename(json_path, file_path)
 
         else:
-            xml_path = os.path.splitext(file_path)[0] + XML_EXT
-            txt_path = os.path.splitext(file_path)[0] + TXT_EXT
+            xml_path = file_path.rsplit('.', 1)[0][0] + XML_EXT
+            txt_path = file_path.rsplit('.', 1)[0] + TXT_EXT
             filename_without_extension,extension = os.path.split(txt_path)
             txt_path=os.path.join(filename_without_extension, "labeled", extension)
             print("txt_path is ",txt_path)
@@ -1608,7 +1610,8 @@ class MainWindow(QMainWindow, WindowMixin):
             item = QListWidgetItem(imgPath)
             self.file_list_widget.addItem(item)
         first_item=self.file_list_widget.item(self.cur_img_idx)#klasor secince ilk itemi yukleyip qwidgetlistte secsin
-        first_item.setSelected(True)
+        if first_item:
+            first_item.setSelected(True)
     def verify_image(self, _value=False):
         # Proceeding next image without dialog if having any label
         if self.file_path is not None:
@@ -1705,7 +1708,7 @@ class MainWindow(QMainWindow, WindowMixin):
         if self.default_save_dir is not None and len(ustr(self.default_save_dir)):
             if self.file_path:
                 image_file_name = os.path.basename(self.file_path)
-                saved_file_name = os.path.splitext(image_file_name)[0]
+                saved_file_name = image_file_name.rsplit('.', 1)[0]
                 #buraya label folderi acilcak
                 saved_path = os.path.join(ustr(self.default_save_dir), saved_file_name)
                 print("1476",self.default_save_dir)
@@ -1716,12 +1719,12 @@ class MainWindow(QMainWindow, WindowMixin):
         else:
             image_file_dir = os.path.dirname(self.file_path)
             image_file_name = os.path.basename(self.file_path)
-            saved_file_name = os.path.splitext(image_file_name)[0]
+            saved_file_name = image_file_name.rsplit('.', 1)[0]
             print("saved_file_name is ",saved_file_name)
             saved_path = os.path.join(image_file_dir, saved_file_name)
             # self._save_file(saved_path if self.label_file
             #                 else self.save_file_dialog(remove_ext=False))
-            self._save_file(self.save_file_dialog(remove_ext=False)) # uzanti haric full path giriyor 
+            self._save_file(self.save_file_dialog(remove_ext=True)) # uzanti haric full path giriyor 
             
 
     def save_file_as(self, _value=False):
@@ -1744,20 +1747,20 @@ class MainWindow(QMainWindow, WindowMixin):
         #dlg.setDefaultSuffix(LabelFile.suffix[1:])
         #dlg.setDefaultSuffix("txt")
         dlg.setAcceptMode(QFileDialog.AcceptSave)
-        filename_without_extension = os.path.splitext(self.file_path)[0]# resim lokasyonunun.jpg olmadan full pathi
+        filename_without_extension = self.file_path.rsplit('.', 1)[0]# resim lokasyonunun.jpg olmadan full pathi
         #filename_without_extension = os.path.join(self.default_save_dir,)[0]
         #print("filenamewoext",filename_without_extension)
         #os.path joinde falan ortadaki itemlere / koyarsan sol tarafi siler direk /la baslayan itemden baslas absolute pathi resetler
-        print("file wo ext',filename_without_extension")
+        print("file wo ext",filename_without_extension)
         dlg.selectFile(filename_without_extension.split(os.sep)[-1])#absolute path verince dialog folderini oraya cekiyor, vermezsen open_dialog_pathtaki yeri aciyor,
         #burada sadece uzantisiz resmin adini sectiriyorum
         dlg.setOption(QFileDialog.DontUseNativeDialog, False)
         if dlg.exec_():
-            full_file_path = ustr(dlg.selectedFiles()[0])#(opendialog+selectfile)
+            full_file_path = os.path.normpath(ustr(dlg.selectedFiles()[0]))#(opendialog+selectfile)
             print("save icin kullanilan final path",full_file_path) # uzanti haric full path
             if remove_ext:
-                print("split savepath ", os.path.splitext(full_file_path)[0])
-                return os.path.splitext(full_file_path)[0]  # Return file path without the extension.
+                print("split savepath ", full_file_path.rsplit('.', 1)[0])
+                return full_file_path.rsplit('.', 1)[0]  # Return file path without the extension.
             else:
                 return full_file_path
         return ''
@@ -2059,6 +2062,7 @@ def matlab_dehaze(img_queue, flag):
     instance_haze=libreducehaze.initialize()
     while True:
         im_name= img_queue.get()  # queue get ve putta kendini lockluyor, get item ceker set item girer
+        print("matlabin aldigi name", im_name)
         instance_haze.reducehaze(im_name, nargout=0)#opencv.
         
         flag.value=1

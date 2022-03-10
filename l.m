@@ -27,12 +27,11 @@ BInv = imreducehaze(AInv, 'Method','approx','ContrastEnhancement','boost');
 BImp = imcomplement(BInv);
 % split_path=split(filename, '.')
 % path=string(split_path(1))
-%filename='18_dehaze.jpg.jpg'
-[fPath, fName, fExt] = fileparts(filename)
+[fPath, fName, fExt] = fileparts(filename);
 path=fullfile(fPath,fName)
 file_name = strcat(path,'_dehaze.jpg');%os otomatik extensionu extensiona yaziyor filename yazmiyor
 imwrite(BImp, file_name, 'jpg');
-fprintf("matlab image written.\n");
+fprintf("matlab image written.");
 end
 
 %figure, montage({A,B,BImp});
