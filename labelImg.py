@@ -125,7 +125,8 @@ class MainWindow(QMainWindow, WindowMixin):
         self.last_open_dir = None
         self.cur_img_idx = 0
         self.img_count = len(self.m_img_list)
-
+        #For storing haze reduced image path
+        self.current_haze_path=None
         # Whether we need to save or not.
         self.dirty = False
 
@@ -440,10 +441,10 @@ class MainWindow(QMainWindow, WindowMixin):
                               onShapesPresent=(save_as, hide_all, show_all))
 
         self.menus = Struct(
-            file=self.menu(get_str('menu_file')),
-            edit=self.menu(get_str('menu_edit')),
-            view=self.menu(get_str('menu_view')),
-            help=self.menu(get_str('menu_help')),
+            # file=self.menu(get_str('menu_file')),
+            # edit=self.menu(get_str('menu_edit')),
+            # view=self.menu(get_str('menu_view')),
+            # help=self.menu(get_str('menu_help')),
             recentFiles=QMenu(get_str('menu_openRecent')),
             labelList=label_menu)
 
@@ -464,19 +465,19 @@ class MainWindow(QMainWindow, WindowMixin):
         self.display_label_option.setChecked(settings.get(SETTING_PAINT_LABEL, False))
         self.display_label_option.triggered.connect(self.toggle_paint_labels_option)
 
-        add_actions(self.menus.file,
-                    (open, open_dir, change_save_dir, open_annotation, copy_prev_bounding, self.menus.recentFiles, save, save_format, save_as, close, reset_all, delete_image, quit))
-        add_actions(self.menus.help, (help_default, show_info, show_shortcut))
-        add_actions(self.menus.view, (
-            self.auto_saving,
-            self.single_class_mode,
-            self.display_label_option,
-            labels, advanced_mode, None,
-            hide_all, show_all, None,
-            zoom_in, zoom_out, zoom_org, None,
-            fit_window, fit_width))
+        # add_actions(self.menus.file,
+        #             (open, open_dir, change_save_dir, open_annotation, copy_prev_bounding, self.menus.recentFiles, save, save_format, save_as, close, reset_all, delete_image, quit))
+        # add_actions(self.menus.help, (help_default, show_info, show_shortcut))
+        # add_actions(self.menus.view, (
+        #     self.auto_saving,
+        #     self.single_class_mode,
+        #     self.display_label_option,
+        #     labels, advanced_mode, None,
+        #     hide_all, show_all, None,
+        #     zoom_in, zoom_out, zoom_org, None,
+        #     fit_window, fit_width))
 
-        self.menus.file.aboutToShow.connect(self.update_file_menu)
+        # self.menus.file.aboutToShow.connect(self.update_file_menu)
 
         # Custom context menu for the canvas widget:
         add_actions(self.canvas.menus[0], self.actions.beginnerContext)
@@ -554,7 +555,7 @@ class MainWindow(QMainWindow, WindowMixin):
             self.toggle_advanced_mode()
 
         # Populate the File menu dynamically.
-        self.update_file_menu()
+        #self.update_file_menu()
 
         # Since loading the file may take some time, make sure it runs in the background.
         if self.file_path and os.path.isdir(self.file_path):
@@ -639,10 +640,10 @@ class MainWindow(QMainWindow, WindowMixin):
         add_actions(self.tools, tool)
         self.canvas.menus[0].clear()
         add_actions(self.canvas.menus[0], menu)
-        self.menus.edit.clear()
+        #self.menus.edit.clear()
         actions = (self.actions.create,) if self.beginner()\
             else (self.actions.createMode, self.actions.editMode)
-        add_actions(self.menus.edit, actions + self.actions.editMenu)
+        #add_actions(self.menus.edit, actions + self.actions.editMenu)
 
     def set_beginner(self):
         self.tools.clear()
@@ -899,6 +900,7 @@ class MainWindow(QMainWindow, WindowMixin):
                 time.sleep(.25)
         print("corrupt?0")
         hazed=QImage(file_wo_extension+"_dehaze.jpg") 
+        self.current_haze_path=file_wo_extension+"_dehaze.jpg"
         print("corrupt?1")
         self.canvas.load_pixmap(QPixmap.fromImage(hazed)) 
         print("corrupt?2")
@@ -1316,6 +1318,9 @@ class MainWindow(QMainWindow, WindowMixin):
         if self.canvas.selected_shape:
             self.canvas.selected_shape.selected=False
             self.canvas.selected_shape= None
+        if self.current_haze_path:
+            os.remove(self.current_haze_path)
+            self.current_haze_path=None
         self.reset_state()
         #self.selected_shape.selected = False
         self.canvas.setEnabled(False)

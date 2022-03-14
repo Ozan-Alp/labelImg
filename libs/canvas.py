@@ -679,14 +679,14 @@ class Canvas(QWidget):
             self.update()
         elif key == Qt.Key_Return and self.can_close_shape():
             self.finalise()
-        elif key == Qt.Key_Left and self.selected_shape:
-            self.move_one_pixel('Left')
-        elif key == Qt.Key_Right and self.selected_shape:
-            self.move_one_pixel('Right')
-        elif key == Qt.Key_Up and self.selected_shape:
-            self.move_one_pixel('Up')
-        elif key == Qt.Key_Down and self.selected_shape:
-            self.move_one_pixel('Down')
+        # elif key == Qt.Key_Left and self.selected_shape:
+        #     self.move_one_pixel('Left')
+        # elif key == Qt.Key_Right and self.selected_shape:
+        #     self.move_one_pixel('Right')
+        # elif key == Qt.Key_Up and self.selected_shape:
+        #     self.move_one_pixel('Up')
+        # elif key == Qt.Key_Down and self.selected_shape:
+        #     self.move_one_pixel('Down')
 
     def move_one_pixel(self, direction):
         # print(self.selectedShape.points)
