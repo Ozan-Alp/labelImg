@@ -882,9 +882,11 @@ class MainWindow(QMainWindow, WindowMixin):
             s=cv_hsv[:,:,1].copy()
             final_hsv=self.convert_nparray_to_QPixmap(s, ndims=1, format=QImage.Format_Grayscale8)
             self.canvas.load_pixmap(final_hsv)
+            self.canvas.load_shapes([x[1] for x in list(self.items_to_shapes.items())])
         else:
             final_hsv=self.convert_nparray_to_QPixmap(cv_hsv, ndims=3, format=QImage.Format_RGB888)
             self.canvas.load_pixmap(final_hsv)
+            self.canvas.load_shapes([x[1] for x in list(self.items_to_shapes.items())])
     @Enhance_decorator
     def haze_img(self, btn):
         
