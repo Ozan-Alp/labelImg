@@ -164,7 +164,7 @@ if __name__ == "__main__":
                 line = line.strip()
                 class_labels.append(line)
     else:  # Exit if errors occurred
-        print(f"File: {args['classes']} not exists")
+        #print(f"File: {args['classes']} not exists")
         exit(1)
 
     # Prefix of the cloud storage
@@ -200,7 +200,7 @@ if __name__ == "__main__":
                                    training_type_dir,
                                    prefix))
             else:
-                print("Wrong argument for convert mode.\n"
+                #print("Wrong argument for convert mode.\n"
                       "'xml' for converting from xml to csv\n"
                       "'txt' for converting from txt to csv")
                 exit(1)

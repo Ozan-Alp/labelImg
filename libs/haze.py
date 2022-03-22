@@ -29,7 +29,7 @@ def find_intensity_of_atmospheric_light(img, gray):
     for t in toplist:
         if t.intensity > max_channel.intensity:
             max_channel = t
-    print("find_intensity elapsed time", datetime.now()-start)
+    #print("find_intensity elapsed time", datetime.now()-start)
     return max_channel.intensity
 
 
@@ -62,7 +62,7 @@ def dehaze(img, light_intensity, windowSize, t0, w):
             outimg.itemset((y,x,0), clamp(0, ((img.item(y,x,0) - light_intensity) / max(t, t0) + light_intensity), 255))
             outimg.itemset((y,x,1), clamp(0, ((img.item(y,x,1) - light_intensity) / max(t, t0) + light_intensity), 255))
             outimg.itemset((y,x,2), clamp(0, ((img.item(y,x,2) - light_intensity) / max(t, t0) + light_intensity), 255))
-    print("dehaze elapsed time", datetime.now()-start)
+    #print("dehaze elapsed time", datetime.now()-start)
     return outimg
 
 

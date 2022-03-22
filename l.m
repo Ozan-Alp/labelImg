@@ -2,7 +2,7 @@ function reducehaze(filename) %#codegen
 A = imread(filename);
 info = imfinfo(filename);
 if isfield(info, 'Orientation')
-    fprintf("Orientation found");
+    %fprintf("Orientation found");
 if info.Orientation == 8
     A=imrotate(A,90);
 elseif info.Orientation ==6
@@ -27,11 +27,11 @@ BInv = imreducehaze(AInv, 'Method','approx','ContrastEnhancement','boost');
 BImp = imcomplement(BInv);
 % split_path=split(filename, '.')
 % path=string(split_path(1))
-[fPath, fName, fExt] = fileparts(filename);
-path=fullfile(fPath,fName)
+[fPath, fName, ~] = fileparts(filename);
+path=fullfile(fPath,fName);
 file_name = strcat(path,'_dehaze.jpg');%os otomatik extensionu extensiona yaziyor filename yazmiyor
 imwrite(BImp, file_name, 'jpg');
-fprintf("matlab image written.");
+%fprintf("matlab image written.");
 end
 
 %figure, montage({A,B,BImp});

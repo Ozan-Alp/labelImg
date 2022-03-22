@@ -90,7 +90,7 @@ class YoloReader:
         # [labbel, [(x1,y1), (x2,y2), (x3,y3), (x4,y4)], color, color, difficult]
         self.shapes = []
         self.file_path = file_path #label.txt pathi
-        print("file.path",self.file_path )
+        #print("file.path",self.file_path )
         if class_list_path is None:
             dir_path = os.path.dirname(os.path.realpath(self.file_path))# klasorun adini cekiyor
            # self.class_list_path = os.path.join(dir_path,"labeled", "classes.txt")#yolo classlari buradan yukluyor #classes

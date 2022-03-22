@@ -26,7 +26,7 @@ with open("HISTORY.rst", "rb") as history_file:
 SET_REQUIRES = []
 if _platform == "linux" or _platform == "linux2":
    # linux
-   print('linux')
+   #print('linux')
 elif _platform == "darwin":
    # MAC OS X
    SET_REQUIRES.append('py2app')
@@ -50,7 +50,7 @@ class UploadCommand(Command):
     @staticmethod
     def status(s):
         """Prints things in bold."""
-        print('\033[1m{0}\033[0m'.format(s))
+        #print('\033[1m{0}\033[0m'.format(s))
 
     def initialize_options(self):
         pass
