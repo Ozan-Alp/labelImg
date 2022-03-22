@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/home/ozan/anaconda3/bin/ python
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 import threading
@@ -1548,7 +1548,10 @@ class MainWindow(QMainWindow, WindowMixin):
         for file in files:
             if file.lower().endswith(tuple(extensions)):
                 #print(file)
-                images.append(os.path.join(folder_path,file))
+                if "_dehaze" in file:
+                    os.remove(os.path.join(folder_path,file))
+                else:
+                    images.append(os.path.join(folder_path,file))
         natural_sort(images, key=lambda x: x.lower())
         return images
     def change_save_dir_dialog(self, _value=False):
@@ -2056,15 +2059,16 @@ def paint_save(self, image):
 
 def matlab_dehaze(img_queue, flag):
     flag.value=0
-    logging.info("dehaze main process")
+    #logging.info("dehaze main process")
     import importlib.util
-    import os
-    spec=importlib.util.spec_from_file_location("gfg","articles/gfg.py")
-    # Set the LD_LIBRARY_PATH for this process. The particular value may
-    # differ, depending on your installation.
-    os.environ["LD_LIBRARY_PATH"] = "/home/ozan/libreducehaze/v910/runtime/glnxa64:" \
-    "/home/ozan/libreducehaze/v910/bin/glnxa64: /home/ozan/libreducehaze/v910/sys/os/glnxa64:" \
-    "/home/ozan/libreducehaze/v910/sys/opengl/lib/glnxa64:"
+    from sys import platform
+    if platform == "linux" or platform == "linux2":
+        #spec=importlib.util.spec_from_file_location("gfg","articles/gfg.py")
+        # Set the LD_LIBRARY_PATH for this process. The particular value may
+        # differ, depending on your installation.
+        os.environ["LD_LIBRARY_PATH"] = "/home/ozan/libreducehaze/v910/runtime/glnxa64:" \
+        "/home/ozan/libreducehaze/v910/bin/glnxa64: /home/ozan/libreducehaze/v910/sys/os/glnxa64:" \
+        "/home/ozan/libreducehaze/v910/sys/opengl/lib/glnxa64:"
     # Import these modules AFTER setting up the environment variables.
     import libreducehaze
    
