@@ -101,7 +101,7 @@ class CreateMLReader:
         try:
             self.parse_json()
         except ValueError:
-            #print("JSON decoding failed")
+       #print("JSON decoding failed")
             pass
 
     def parse_json(self):

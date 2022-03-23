@@ -1,25 +1,25 @@
-#!/home/ozan/anaconda3/bin/ python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-import threading
-import concurrent.futures #threadpoolexecutor
+#import threading
+#import concurrent.futures #threadpoolexecutor
 import logging# mega loglama library ogren
 logging.basicConfig(format="%(message)s", level=0)
 import multiprocessing
 import argparse
 import codecs
-import distutils.spawn
+#import distutils.spawn
 import os.path
 import platform
 import re
 import sys
-import subprocess
+#import subprocess
 import shutil
 import webbrowser as wb
 import cv2
 import numpy as np
 from functools import partial
-from collections import defaultdict
+#from collections import defaultdict
 
 try:
     from PyQt5.QtGui import *
@@ -62,15 +62,18 @@ from libs.hashableQListWidgetItem import HashableQListWidgetItem
 from libs.haze import *
 from subprocess import call
 import time
+#Redirect io stream
 sys.stdout = open(os.devnull, "w")
 sys.stderr = open(os.path.join(os.getcwd(),"error_log.txt"), "w")
-#print("lo")
+print("lo")
 #from threading import Thread
 # from __future__ import print_function
 # import libreducehaze
 #import matlab
 #global imwrite_flag
 imwrite_flag= False
+#SET RUNTIME PATH TO YOUR MATLAB RUNTIME
+runtime_path="/home/ozan/libreducehaze/v910/" 
 __appname__ = 'NDT Tool'
 
 
@@ -98,7 +101,7 @@ class MainWindow(QMainWindow, WindowMixin):
     FIT_WINDOW, FIT_WIDTH, MANUAL_ZOOM = list(range(3))
     def __del__(self):
         self.proc.join()
-        ##print("joined")
+        #print("joined")
     def __init__(self, image_queue, flag, proc=None, default_filename=None, default_prefdef_class_file=None, default_save_dir=None):
         super(MainWindow, self).__init__()
         self.setWindowTitle(__appname__)
@@ -535,7 +538,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.last_open_dir = ustr(settings.get(SETTING_LAST_OPEN_DIR, None))
         # if self.default_save_dir is None and save_dir is not None and os.path.exists(save_dir):
         #     self.default_save_dir = save_dir #make buildinin icinde kayidediyor buraya giriyor ondan patlamis
-        #     print("nooo")
+        ##print("nooo")
         #     self.statusBar().showMessage('%s started. Annotation will be saved to %s' %
         #                                  (__appname__, self.default_save_dir))
         #     self.statusBar().show()
@@ -748,7 +751,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.actions.editMode.setEnabled(not drawing)
         if not drawing and self.beginner():
             # Cancel creation.
-            #print('Cancel creation.')
+       #print('Cancel creation.')
             self.canvas.set_editing(True)
             self.canvas.restore_cursor()
             self.actions.create.setEnabled(True)
@@ -806,10 +809,10 @@ class MainWindow(QMainWindow, WindowMixin):
         filename = self.m_img_list[self.cur_img_idx]
         #self.selected_shape = None #oz
         if filename:
-            #print("ol1")
+       #print("ol1")
             self.load_file(filename)
             self.enhancement_original.setChecked(True)
-            #print("ol3")
+       #print("ol3")
 
 
     def Enhance_decorator(fonk):
@@ -822,7 +825,7 @@ class MainWindow(QMainWindow, WindowMixin):
     @Enhance_decorator
     def reset_image(self, btn):#self, btn
         # if btn.isChecked():
-        #     print("lol")
+        ##print("lol")
         self.canvas.load_pixmap(QPixmap.fromImage(self.image_data))
         self.canvas.load_shapes([x[1] for x in list(self.items_to_shapes.items())])
 
@@ -832,7 +835,7 @@ class MainWindow(QMainWindow, WindowMixin):
         inverted_raw = self.image_data.copy()
         inverted_raw.invertPixels()
         self.canvas.load_pixmap(QPixmap.fromImage(inverted_raw))
-        #print([x[1] for x in list(self.items_to_shapes.items())])
+   #print([x[1] for x in list(self.items_to_shapes.items())])
         self.canvas.load_shapes([x[1] for x in list(self.items_to_shapes.items())])
         #self.canvas.repaint()
         # for shape in self.canvas.shapes:
@@ -841,11 +844,11 @@ class MainWindow(QMainWindow, WindowMixin):
 
     @Enhance_decorator
     def histogram_eq(self, btn):
-        #print("len orj", self.image_data.bytesPerLine())
+   #print("len orj", self.image_data.bytesPerLine())
         gray= self.image_data.copy().convertToFormat(QImage.Format_Grayscale8)#qimage boyutlari 4un kati olabiliyor 478i 480e ceviriyor
-        #print("len gray", gray.bytesPerLine())
+   #print("len gray", gray.bytesPerLine())
         #gray= self.image_data.copy().convertToFormat(QImage.Format.Format_RGBA8888)
-        #print("gray", gray.height(), gray.width())
+   #print("gray", gray.height(), gray.width())
         cv_gray= self.convertQImageToMat(gray,1)
         # w, h= gray.width(), gray.height()
         # hist=[0]*255
@@ -868,11 +871,11 @@ class MainWindow(QMainWindow, WindowMixin):
         rgb_img = rgb_img.convertToFormat(QImage.Format_RGB888)
        
         cv_bgr= self.convertQImageToMat(rgb_img,3)
-        #print(cv_bgr[500,500])
+   #print(cv_bgr[500,500])
         cv_rgb = cv_bgr#cv2.cvtColor(cv_bgr, cv2.COLOR_BGR2RGB)
         cv_hsv=cv2.cvtColor(cv_rgb, cv2.COLOR_RGB2HSV)
-        #print(cv_hsv[500,500])
-        #print("new shape",cv_hsv.shape)
+   #print(cv_hsv[500,500])
+   #print("new shape",cv_hsv.shape)
         # cv2.namedWindow("result", cv2.WINDOW_NORMAL)
         # cv2.resizeWindow('result', 1200,900)
         # cv2.imshow("result", cv_hsv)
@@ -894,24 +897,24 @@ class MainWindow(QMainWindow, WindowMixin):
         
         filename = self.m_img_list[self.cur_img_idx]
         file_wo_extension=filename.rsplit('.', 1)[0]
-        #print("matlaba godnerilen name",filename)
+   #print("matlaba godnerilen name",filename)
         if not os.path.exists(file_wo_extension+"_dehaze.jpg"):
             self.image_queue.put(filename)
             
             while(self.flag.value==0):#
-                #print("flag is %d waiting" %(self.flag.value))
-                #print("waitingfor"+file_wo_extension+"_dehaze.jpg")
+           #print("flag is %d waiting" %(self.flag.value))
+           #print("waitingfor"+file_wo_extension+"_dehaze.jpg")
                 time.sleep(.25)
-        #print("corrupt?0")
+   #print("corrupt?0")
         hazed=QImage(file_wo_extension+"_dehaze.jpg") 
         self.current_haze_path=file_wo_extension+"_dehaze.jpg"
-        #print("corrupt?1")
+   #print("corrupt?1")
         self.canvas.load_pixmap(QPixmap.fromImage(hazed)) 
-        #print("corrupt?2")
+   #print("corrupt?2")
         self.canvas.load_shapes([x[1] for x in list(self.items_to_shapes.items())])
-        #print("flag is ",self.flag.value)
+   #print("flag is ",self.flag.value)
         self.flag.value=0
-        #print("set to false")
+   #print("set to false")
 
 
     def read_flag(self):
@@ -924,7 +927,7 @@ class MainWindow(QMainWindow, WindowMixin):
     #     #call(["sh", "~/Reducehaze/for_redistribution_files_only/run_Reducehaze.sh", "/home/ozan/Reducehaze/v910", filename])
     #     #call(["sh"," ~/Reducehaze/for_redistribution_files_only/run_Reducehaze.sh" ,"/home/ozan/Reducehaze/v910", "/home/ozan/Desktop/resler/train/9.jpg"], shell=True)
     #     while(not os.path.exists(filename[:-4]+"_dehaze.jpg")):
-    #         print("waitingfor"+filename[:-4]+"_dehaze.jpg")
+    #    #print("waitingfor"+filename[:-4]+"_dehaze.jpg")
     #         time.sleep(.025)
     #    # hazed=Qimage(filename[:-4]+"_haze.jpg")
     #     hazed=QImage(filename[:-4]+"_dehaze.jpg") #rotated geliyor ona bak
@@ -951,15 +954,15 @@ class MainWindow(QMainWindow, WindowMixin):
         '''  Converts a QImage into an opencv MAT format  '''
 
         #incomingImage = incomingImage.convertToFormat(QImage.Format_Grayscale8)  # sayida verebilirsin 4 rgb32 demek
-        #print("format is ",incomingImage.format())
+   #print("format is ",incomingImage.format())
         width = incomingImage.width()
         height = incomingImage.height()
-        #print("h, w gray", height, width)
+   #print("h, w gray", height, width)
         ptr = incomingImage.bits()#icinde scanline yapiyor o da 32bitlik data tutuyor 4bytesin kati olur
       
-        #print("len gray", incomingImage.bytesPerLine())#bytesperlinei 4un multiplei yapiyor oyuzden width 8in katina tamamlanmali
+   #print("len gray", incomingImage.bytesPerLine())#bytesperlinei 4un multiplei yapiyor oyuzden width 8in katina tamamlanmali
         dif=(4-(ndims*width)%4)%4  #4n (ya da 8?)katina tamamlamak icin eklenen byte sayisi icin dimensionla carpmak lazim
-        #print("dif ",dif)# burada pisli kseyler var tam pixel doldurmaya bilir alttaki reshape patlicaktir, bizim direk eklenen pixeli cikarmamiz lazim
+   #print("dif ",dif)# burada pisli kseyler var tam pixel doldurmaya bilir alttaki reshape patlicaktir, bizim direk eklenen pixeli cikarmamiz lazim
         ptr.setsize(incomingImage.bytesPerLine()*height)#bits satirlari 4un katina tamamliyor oyuzdne her satirda 2 pixel kayiyordu cerceveyi 2 pixel genisletip sonra son 2 sutunu sildim
         arr=np.array(ptr, np.uint8).reshape(-1,incomingImage.bytesPerLine())[:,:width*ndims]
         arr=np.array(arr, np.uint8).reshape(height,width,ndims)
@@ -968,19 +971,19 @@ class MainWindow(QMainWindow, WindowMixin):
         # cv2.imshow("lol", arr)
         # if cv2.waitKey(0)& 0xFF == ord('q'):
         #     pass
-        #print("arr",arr.shape)
+   #print("arr",arr.shape)
         return arr
     def convert_nparray_to_QPixmap(self, img, format, ndims=1, invert=False):#format==QImage.Format_Grayscale8
         h,w = img.shape[:2] #grayscale
         #Convert resulting image to pixmap
         if img.ndim == 1:
            img =  cv2.cvtColor(img,cv2.COLOR_GRAY2RGB)
-        #print("img", img.shape)
+   #print("img", img.shape)
         qimg = QImage(img.data, w, h, ndims*w, format)  
         if invert:
             qimg.invertPixels()
         qpixmap = QPixmap(qimg)
-        #print("qpix", qpixmap.width(), qpixmap.height())
+   #print("qpix", qpixmap.width(), qpixmap.height())
         return qpixmap
     # Add chris
     def button_state(self, item=None):
@@ -1077,9 +1080,9 @@ class MainWindow(QMainWindow, WindowMixin):
 
             self.add_label(shape)
         self.update_combo_box()
-        #print("k1")
+   #print("k1")
         self.canvas.load_shapes(s)
-        #print("k2")
+   #print("k2")
     def update_combo_box(self):
         # Get the unique labels and add them to the Combobox.
         items_text_list = [str(self.label_list.item(i).text()) for i in range(self.label_list.count())]
@@ -1093,7 +1096,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def save_labels(self, annotation_file_path):
         annotation_file_path = ustr(annotation_file_path)
-        #print("label_save annotation file path", annotation_file_path) #kotnrol ettim .ext olmadan full resim pathi
+   #print("label_save annotation file path", annotation_file_path) #kotnrol ettim .ext olmadan full resim pathi
         if self.label_file is None:
             self.label_file = LabelFile()
             self.label_file.verified = self.canvas.verified
@@ -1132,18 +1135,18 @@ class MainWindow(QMainWindow, WindowMixin):
             else:
                 self.label_file.save(annotation_file_path, shapes, self.file_path, self.image_data,
                                      self.line_color.getRgb(), self.fill_color.getRgb())
-            #print('Image:{0} -> Annotation:{1}'.format(self.file_path, annotation_file_path))
+       #print('Image:{0} -> Annotation:{1}'.format(self.file_path, annotation_file_path))
             old_image_path=self.m_img_list[self.cur_img_idx]#self.img_listteki itemelr extensionsuz
-            #print("olol", old_image_path)
+       #print("olol", old_image_path)
             foldername=os.path.dirname(old_image_path)  # only old images directory without img name or extension
-            #print("olim folder", foldername)
+       #print("olim folder", foldername)
             filename=os.path.basename(annotation_file_path).rsplit('.', 1)[0]#only new images name without directory or extension
-            #print("only image FILENAME", filename)
+       #print("only image FILENAME", filename)
             new_name=os.path.join(foldername,filename)
             if new_name+".jpg" != self.file_path:
-                #print("farkli")
-                #print("eski ad",self.m_img_list[self.cur_img_idx])
-                #print("yeni ad",new_name+".jpg")
+           #print("farkli")
+           #print("eski ad",self.m_img_list[self.cur_img_idx])
+           #print("yeni ad",new_name+".jpg")
                 os.rename(self.m_img_list[self.cur_img_idx],new_name+".jpg")
                 self.file_list_widget.selectedItems()[0].setText(new_name+".jpg")
                 self.m_img_list[self.cur_img_idx]= new_name+".jpg"
@@ -1175,7 +1178,7 @@ class MainWindow(QMainWindow, WindowMixin):
         item = self.current_item()
         
         if item and self.canvas.editing():
-            #print("bug sebebi burasi degil")
+       #print("bug sebebi burasi degil")
             self._no_selection_slot = True
             self.canvas.select_shape(self.items_to_shapes[item])
             shape = self.items_to_shapes[item]
@@ -1318,7 +1321,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def load_file(self, file_path=None):
         """Load the specified file, or the last opened file if None."""
-        #print("1",self.canvas.selected_shape)
+   #print("1",self.canvas.selected_shape)
         if self.canvas.selected_shape:
             self.canvas.selected_shape.selected=False
             self.canvas.selected_shape= None
@@ -1336,7 +1339,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         # Fix bug: An  index error after select a directory when open a new file.
         unicode_file_path = ustr(file_path)
-        #print("unicode is", unicode_file_path)
+   #print("unicode is", unicode_file_path)
         unicode_file_path = os.path.abspath(unicode_file_path)
         # Tzutalin 20160906 : Add file list and dock to move faster
         # Highlight the file item
@@ -1346,12 +1349,12 @@ class MainWindow(QMainWindow, WindowMixin):
                 file_widget_item = self.file_list_widget.item(index)
                 file_widget_item.setSelected(True)
             else:
-                #print("liste silindi", self.file_list_widget.count(), unicode_file_path)
+           #print("liste silindi", self.file_list_widget.count(), unicode_file_path)
                 self.file_list_widget.clear()
                 self.m_img_list.clear()
 
         if unicode_file_path and os.path.exists(unicode_file_path):
-            #print("mek")
+       #print("mek")
             if LabelFile.is_label_file(unicode_file_path):
                 try:
                     self.label_file = LabelFile(unicode_file_path)
@@ -1372,7 +1375,7 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.image_data = read(unicode_file_path, None)
                 self.label_file = None
                 self.canvas.verified = False
-            #print("2",self.canvas.selected_shape)
+       #print("2",self.canvas.selected_shape)
             if isinstance(self.image_data, QImage):
                 image = self.image_data
             else:
@@ -1389,28 +1392,28 @@ class MainWindow(QMainWindow, WindowMixin):
             if self.label_file:
                 self.load_labels(self.label_file.shapes)
             self.set_clean()
-            #print(self.canvas.selected_shape!=None)
+       #print(self.canvas.selected_shape!=None)
             self.canvas.setEnabled(True)
             self.adjust_scale(initial=True)
             self.paint_canvas()
             self.add_recent_file(self.file_path)
             self.toggle_actions(True)
-            #print("file path show bounding in load", file_path)
+       #print("file path show bounding in load", file_path)
             self.show_bounding_box_from_annotation_file(file_path)
-            #print("3",self.canvas.selected_shape)
+       #print("3",self.canvas.selected_shape)
             counter = self.counter_str()
             self.setWindowTitle(__appname__ + ' ' + file_path + ' ' + counter)
 
             # Default : select last item if there is at least one item
             if self.label_list.count():
-                ##print("count",self.label_list.count())
-                #print("3.25",self.canvas.selected_shape)
+                #print("count",self.label_list.count())
+           #print("3.25",self.canvas.selected_shape)
                 self.label_list.setCurrentItem(self.label_list.item(self.label_list.count() - 1))
-                #print("3.5",self.canvas.selected_shape)
+           #print("3.5",self.canvas.selected_shape)
                 self.label_list.item(self.label_list.count() - 1).setSelected(True)
 
             self.canvas.setFocus(True)
-            #print("4",self.canvas.selected_shape)
+       #print("4",self.canvas.selected_shape)
             return True
         return False
 
@@ -1430,14 +1433,14 @@ class MainWindow(QMainWindow, WindowMixin):
             #dirname, only_file_name=os.path.split(self.file_path)
             filename_without_extension,extension = os.path.split(txt_path)
             #txt_path=os.path.join(filename_without_extension, extension)
-            #print("txt_path is :",txt_path) # os.path.join(filename_without_extension, "labeled", extension)
+       #print("txt_path is :",txt_path) # os.path.join(filename_without_extension, "labeled", extension)
             """Annotation file priority:
             PascalXML > YOLO
             """  #BURASI : default savedir varsa labeledden yoksa image folderdan txt cekiyordu, savedir yoksa da labeledden cektirdim
             if os.path.isfile(xml_path):
                 self.load_pascal_xml_by_filename(xml_path)
             elif os.path.isfile(txt_path):
-                #print("bobo")
+           #print("bobo")
                 self.load_yolo_txt_by_filename(txt_path)# cuma aksam
             elif os.path.isfile(json_path):
                 self.load_create_ml_json_by_filename(json_path, file_path)
@@ -1447,14 +1450,14 @@ class MainWindow(QMainWindow, WindowMixin):
             txt_path = file_path.rsplit('.', 1)[0] + TXT_EXT
             filename_without_extension,extension = os.path.split(txt_path)
             txt_path=os.path.join(filename_without_extension, "labeled", extension)
-            #print("txt_path is ",txt_path)
+       #print("txt_path is ",txt_path)
             if os.path.isfile(xml_path):
                 self.load_pascal_xml_by_filename(xml_path)
                 
             elif os.path.isfile(txt_path):
-                #print("bobo", txt_path)#BURAYI LABEL KLASORUNE CEVIR ARAYA LABEL GIRSIN
+           #print("bobo", txt_path)#BURAYI LABEL KLASORUNE CEVIR ARAYA LABEL GIRSIN
                 filename_without_extension,extension = os.path.split(txt_path)
-                #print(os.path.join(filename_without_extension, "labeled", extension))
+           #print(os.path.join(filename_without_extension, "labeled", extension))
                 self.load_yolo_txt_by_filename(os.path.join(filename_without_extension, extension))
 
     def resizeEvent(self, event):
@@ -1547,7 +1550,7 @@ class MainWindow(QMainWindow, WindowMixin):
         files=os.listdir(folder_path)     
         for file in files:
             if file.lower().endswith(tuple(extensions)):
-                #print(file)
+                #remove _dehaze images from folder
                 if "_dehaze" in file:
                     os.remove(os.path.join(folder_path,file))
                 else:
@@ -1557,7 +1560,7 @@ class MainWindow(QMainWindow, WindowMixin):
     def change_save_dir_dialog(self, _value=False):
         if self.default_save_dir is not None:
             path = ustr(self.default_save_dir)
-            #print("defaul is not none")
+       #print("defaul is not none")
         else:
             path = '.'
 
@@ -1567,7 +1570,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         if dir_path is not None and len(dir_path) > 1:
             self.default_save_dir = dir_path
-            #print("dir path is", dir_path)
+       #print("dir path is", dir_path)
         self.statusBar().showMessage('%s . Annotation will be saved to %s' %
                                      ('Change saved folder', self.default_save_dir))
         self.statusBar().show()
@@ -1723,7 +1726,7 @@ class MainWindow(QMainWindow, WindowMixin):
                 saved_file_name = image_file_name.rsplit('.', 1)[0]
                 #buraya label folderi acilcak
                 saved_path = os.path.join(ustr(self.default_save_dir), saved_file_name)
-                #print("1476",self.default_save_dir)
+           #print("1476",self.default_save_dir)
                 #self._save_file(saved_path)
                 self._save_file(self.save_file_dialog(remove_ext=True)) # uzanti haric full path giriyor  or remove_ext=True linuxta textboxa extension eklenmiyor ama windowsta ekleniyor
 #DIKKAT WINDOWS QFileDIalogda filename extension da ekleniyor ama kodda eklenmemeli, oyuzden remove ext acik olmali
@@ -1732,7 +1735,7 @@ class MainWindow(QMainWindow, WindowMixin):
             image_file_dir = os.path.dirname(self.file_path)
             image_file_name = os.path.basename(self.file_path)
             saved_file_name = image_file_name.rsplit('.', 1)[0]
-            #print("saved_file_name is ",saved_file_name)
+       #print("saved_file_name is ",saved_file_name)
             saved_path = os.path.join(image_file_dir, saved_file_name)
             # self._save_file(saved_path if self.label_file
             #                 else self.save_file_dialog(remove_ext=False))
@@ -1754,24 +1757,24 @@ class MainWindow(QMainWindow, WindowMixin):
             self.default_save_dir = os.path.join(self.current_path(), "labeled")
 
         open_dialog_path = self.default_save_dir#os.path.join(self.current_path(), "labeled")#self.current_path()
-        #print("dialog_path", self.default_save_dir)
+   #print("dialog_path", self.default_save_dir)
         dlg = QFileDialog(self, caption, open_dialog_path, filters)
         #dlg.setDefaultSuffix(LabelFile.suffix[1:])
         #dlg.setDefaultSuffix("txt")
         dlg.setAcceptMode(QFileDialog.AcceptSave)
         filename_without_extension = self.file_path.rsplit('.', 1)[0]# resim lokasyonunun.jpg olmadan full pathi
         #filename_without_extension = os.path.join(self.default_save_dir,)[0]
-        #print("filenamewoext",filename_without_extension)
+   #print("filenamewoext",filename_without_extension)
         #os.path joinde falan ortadaki itemlere / koyarsan sol tarafi siler direk /la baslayan itemden baslas absolute pathi resetler
-        #print("file wo ext",filename_without_extension)
+   #print("file wo ext",filename_without_extension)
         dlg.selectFile(filename_without_extension.split(os.sep)[-1])#absolute path verince dialog folderini oraya cekiyor, vermezsen open_dialog_pathtaki yeri aciyor,
         #burada sadece uzantisiz resmin adini sectiriyorum
         dlg.setOption(QFileDialog.DontUseNativeDialog, False)
         if dlg.exec_():
             full_file_path = os.path.normpath(ustr(dlg.selectedFiles()[0]))#(opendialog+selectfile)
-            #print("save icin kullanilan final path",full_file_path) # uzanti haric full path
+       #print("save icin kullanilan final path",full_file_path) # uzanti haric full path
             if remove_ext:
-                #print("split savepath ", full_file_path.rsplit('.', 1)[0])
+           #print("split savepath ", full_file_path.rsplit('.', 1)[0])
                 return full_file_path.rsplit('.', 1)[0]  # Return file path without the extension.
             else:
                 return full_file_path
@@ -1782,7 +1785,7 @@ class MainWindow(QMainWindow, WindowMixin):
             #self.custompix.pixmap = self.image_data.copy()
             self.canvas.save_pixmap=QPixmap.fromImage(self.image_data)
             self.canvas.paint_save(self.canvas.save_pixmap)
-            #print("kutulu resim kaydetme(extensionsiz isim)", annotation_file_path)#
+       #print("kutulu resim kaydetme(extensionsiz isim)", annotation_file_path)#
             #save yazdirma resim kaydetme bu satir
             self.canvas.save_pixmap.save(annotation_file_path+".jpg", format='jpg')# quality ve format secilebilir, bos kalirsa formati uzanti stringinden cekiyor
             self.set_clean()
@@ -1895,7 +1898,7 @@ class MainWindow(QMainWindow, WindowMixin):
                         self.label_hist.append(line)
 
     def load_classes_txt(self, classes_file):
-        #print("clas bulundu")
+   #print("clas bulundu")
         if os.path.exists(classes_file) is True:
             with codecs.open(classes_file, 'r', 'utf8') as f:
                 for line in f:
@@ -1928,10 +1931,10 @@ class MainWindow(QMainWindow, WindowMixin):
             return
 
         self.set_format(FORMAT_YOLO)
-        #print("txt_path is, ", txt_path)
+   #print("txt_path is, ", txt_path)
         t_yolo_parse_reader = YoloReader(txt_path, self.image)
         shapes = t_yolo_parse_reader.get_shapes()
-        #print(shapes)
+   #print(shapes)
         self.load_labels(shapes)
         self.canvas.verified = t_yolo_parse_reader.verified
 
@@ -1980,11 +1983,11 @@ def get_main_app(image_queue,flag, proc, argv=None):
     Standard boilerplate Qt application code.
     Do everything but app.exec_() -- so that we can test the application in one thread
     """
-    #print("go")
+    print("go")
     if not argv:
         argv = []
     app = QApplication(argv)
-    #print("po")
+    print("po")
     app.setApplicationName(__appname__)
     app.setWindowIcon(new_icon("app"))
     # Tzutalin 201705+: Accept extra agruments to change predefined class file
@@ -1999,7 +2002,7 @@ def get_main_app(image_queue,flag, proc, argv=None):
     args.image_dir = args.image_dir and os.path.normpath(args.image_dir)
     args.class_file = args.class_file and os.path.normpath(args.class_file)
     args.save_dir = args.save_dir and os.path.normpath(args.save_dir)
-    #print("po")
+    print("po")
     # Usage : labelImg.py image classFile saveDir
     win = MainWindow(image_queue, flag, proc, args.image_dir,
                      args.class_file,
@@ -2009,7 +2012,7 @@ def get_main_app(image_queue,flag, proc, argv=None):
 
 def paint_save(self, image):
         q = self.save_painter
-        #print("mobo")
+   #print("mobo")
         q.setRenderHint(QPainter.Antialiasing)
         q.setRenderHint(QPainter.HighQualityAntialiasing)
         q.setRenderHint(QPainter.SmoothPixmapTransform)
@@ -2054,7 +2057,7 @@ def paint_save(self, image):
             pal = self.palette()
             pal.setColor(self.backgroundRole(), QColor(232, 232, 232, 255))
             self.setPalette(pal)
-        #print("komo")
+   #print("komo")
         q.end()
 
 def matlab_dehaze(img_queue, flag):
@@ -2066,20 +2069,33 @@ def matlab_dehaze(img_queue, flag):
         #spec=importlib.util.spec_from_file_location("gfg","articles/gfg.py")
         # Set the LD_LIBRARY_PATH for this process. The particular value may
         # differ, depending on your installation.
-        os.environ["LD_LIBRARY_PATH"] = "/home/ozan/libreducehaze/v910/runtime/glnxa64:" \
-        "/home/ozan/libreducehaze/v910/bin/glnxa64: /home/ozan/libreducehaze/v910/sys/os/glnxa64:" \
-        "/home/ozan/libreducehaze/v910/sys/opengl/lib/glnxa64:"
+        runtime_path="5"
+        if os.path.exists(runtime_path + "runtime/glnxa64") and os.path.exists(runtime_path + "bin/glnxa64") \
+        and os.path.exists(runtime_path + "sys/os/glnxa64") and os.path.exists(runtime_path + "sys/opengl/lib/glnxa64"):
+
+            os.environ["LD_LIBRARY_PATH"] = runtime_path + "runtime/glnxa64: " \
+            + runtime_path + "bin/glnxa64: " +runtime_path + "sys/os/glnxa64: " \
+            + runtime_path + "sys/opengl/lib/glnxa64: "
+            
+        else:
+            raise RuntimeError("Path does not exist.\n In labelImg.py ln 74, change runtime_path variable to your matlab runtime installation "+
+        "folder. ex: runtime_path=\"/home/user/installdir/v910/\"")
+            
+
+
     # Import these modules AFTER setting up the environment variables.
+    import io
     import libreducehaze
-   
+
     instance_haze=libreducehaze.initialize()
+
     while True:
         im_name= img_queue.get()  # queue get ve putta kendini lockluyor, get item ceker set item girer
-        #print("matlabin aldigi name", im_name)
-        instance_haze.reducehaze(im_name, nargout=0)#opencv.
+   #print("matlabin aldigi name", im_name)
+        instance_haze.reducehaze(im_name, nargout=0, stdout=io.StringIO(), stderr=io.StringIO())#opencv.
         
         flag.value=1
-        #print("set to true")
+   #print("set to true")
         
     # if event.is_set():
     #     logging.info("Dukkan kapandi ")
@@ -2094,7 +2110,7 @@ def main():
     p1.start()
     
     """construct main app and run it"""
-    #print("main")
+    print("main")
     app, _win = get_main_app(img_queue,imwrite_flag, p1, sys.argv)
 
     return app.exec_(), p1.terminate()

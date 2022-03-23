@@ -1,0 +1,3 @@
+labelImg.py:278: DeprecationWarning: an integer is required (got type DockWidgetFeatures).  Implicit conversion to integers using __int__ is deprecated, and may be removed in a future version of Python.
+  self.dock.setFeatures(self.dock.features() ^ self.dock_features)
+(0, None)

@@ -51,7 +51,7 @@ class Canvas(QWidget):
         self.pixmap = QPixmap()
         self.save_pixmap = QPixmap()
         self.save_painter = QPainter(self.save_pixmap)
-        #print("lol")
+   #print("lol")
         self.visible = {}
         self._hide_background = False
         self.hide_background = False
@@ -473,7 +473,7 @@ class Canvas(QWidget):
             return shape
 
     def copy_selected_shape(self):
-        #print("476")
+   #print("476")
         if self.selected_shape:
             shape = self.selected_shape.copy()
             self.de_select_shape()
@@ -496,7 +496,7 @@ class Canvas(QWidget):
     def paint_save(self, image):
         q = QPainter(image)
         # pixmap olustur boyut ver sonra beyazla doldur 
-        #print("mobo")
+   #print("mobo")
         q.setRenderHint(QPainter.Antialiasing)
         q.setRenderHint(QPainter.HighQualityAntialiasing)
         q.setRenderHint(QPainter.SmoothPixmapTransform)
@@ -541,7 +541,7 @@ class Canvas(QWidget):
             pal = self.palette()
             pal.setColor(self.backgroundRole(), QColor(232, 232, 232, 255))
             self.setPalette(pal)
-        #print("komo")
+   #print("komo")
         self.update()
 
     
@@ -673,7 +673,7 @@ class Canvas(QWidget):
     def keyPressEvent(self, ev):
         key = ev.key()
         if key == Qt.Key_Escape and self.current:
-            #print('ESC press')
+       #print('ESC press')
             self.current = None
             self.drawingPolygon.emit(False)
             self.update()
@@ -757,7 +757,7 @@ class Canvas(QWidget):
     def load_shapes(self, shapes):  # repaint painteventi triggerliyor, painteventin icinde self.shapesi paint ediyor
         
         self.shapes = list(shapes)
-        #print(len(self.shapes))
+   #print(len(self.shapes))
         self.current = None
         self.repaint()
 

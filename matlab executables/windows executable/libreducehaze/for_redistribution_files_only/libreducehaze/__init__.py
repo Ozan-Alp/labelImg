@@ -97,29 +97,29 @@ class _PathInitializer(object):
 
         path_file = open(self.path_file_name, 'w')
         if self.system == 'Windows':
-            #print('# bin dir: added to both OS path and system path', file=path_file)
+       #print('# bin dir: added to both OS path and system path', file=path_file)
         else:
-            #print('# bin dir: added to system path', file=path_file)
-        #print(self.bin_dir, file=path_file)
-        #print('', file=path_file)
+       #print('# bin dir: added to system path', file=path_file)
+   #print(self.bin_dir, file=path_file)
+   #print('', file=path_file)
         
         if self.system == 'Windows':
-            #print('# extern bin dir: added to both OS path and system path', file=path_file)
+       #print('# extern bin dir: added to both OS path and system path', file=path_file)
         else:
-            #print('# extern bin dir: added to system path', file=path_file)
-        #print(self.extern_bin_dir, file=path_file)
-        #print('', file=path_file)
+       #print('# extern bin dir: added to system path', file=path_file)
+   #print(self.extern_bin_dir, file=path_file)
+   #print('', file=path_file)
         
-        #print('# runtime dir: added to system path', file=path_file)
-        #print(self.runtime_dir, file=path_file)
-        #print('', file=path_file)
+   #print('# runtime dir: added to system path', file=path_file)
+   #print(self.runtime_dir, file=path_file)
+   #print('', file=path_file)
 
-        #print('# matlab (mlarray) dir: added to system path', file=path_file)
-        #print(self.ml_dir, file=path_file)
-        #print('', file=path_file)
+   #print('# matlab (mlarray) dir: added to system path', file=path_file)
+   #print(self.ml_dir, file=path_file)
+   #print('', file=path_file)
 
         if existing_contents:
-            #print(existing_contents, file=path_file)
+       #print(existing_contents, file=path_file)
         path_file.close()
         
     def get_platform_info(self):
@@ -280,8 +280,8 @@ class _PathInitializer(object):
                     ignored_option_found = True
                     break
             if ignored_option_found:
-                #print('WARNING: Options "-nodisplay" and "-nojvm" are ignored on Mac.')
-                #print('They must be passed to mwpython in order to take effect.')
+           #print('WARNING: Options "-nodisplay" and "-nojvm" are ignored on Mac.')
+           #print('They must be passed to mwpython in order to take effect.')
         self.cppext_handle.initializeApplication(option_list)
 
     def terminate_runtime(self):
@@ -301,7 +301,7 @@ try:
     _pir.import_matlab_pysdk_runtime()
     _pir.import_matlab()
 except Exception as e:
-    #print("Exception caught during initialization of Python interface. Details: {0}".format(e))
+    print("Exception caught during initialization of Python interface. Details: {0}".format(e))
     raise
     # We let the program exit normally.
 
