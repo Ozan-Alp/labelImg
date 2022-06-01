@@ -1711,7 +1711,7 @@ class MainWindow(QMainWindow, WindowMixin):
         path = os.path.dirname(ustr(self.file_path)) if self.file_path else '.'
         formats = ['*.%s' % fmt.data().decode("ascii").lower() for fmt in QImageReader.supportedImageFormats()]
         filters = "Image & Label files (%s)" % ' '.join(formats + ['*%s' % LabelFile.suffix])
-        filename = QFileDialog.getOpenFileName(self, '%s - Choose Image or Label file' % __appname__, path, filters)
+        filename, _ = QFileDialog.getOpenFileName(self, '%s - Choose Image or Label file' % __appname__, path, filters)
         if filename:
             if isinstance(filename, (tuple, list)):
                 filename = filename[0]
@@ -2069,7 +2069,7 @@ def matlab_dehaze(img_queue, flag):
         #spec=importlib.util.spec_from_file_location("gfg","articles/gfg.py")
         # Set the LD_LIBRARY_PATH for this process. The particular value may
         # differ, depending on your installation.
-        runtime_path="5"
+        runtime_path="Your matlab runtime parent path Ex:/home/ozan/libreducehaze/v910/"
         if os.path.exists(runtime_path + "runtime/glnxa64") and os.path.exists(runtime_path + "bin/glnxa64") \
         and os.path.exists(runtime_path + "sys/os/glnxa64") and os.path.exists(runtime_path + "sys/opengl/lib/glnxa64"):
 
