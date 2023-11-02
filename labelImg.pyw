@@ -38,7 +38,7 @@ except ImportError:
 
 from libs.combobox import ComboBox
 from libs.default_label_combobox import DefaultLabelComboBox
-from libs.resources import *
+from libs.resources import * # pyrcc5 -o libs/resources.py resources.qrc
 from libs.constants import *
 from libs.utils import *
 from libs.settings import Settings
