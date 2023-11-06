@@ -24,9 +24,9 @@ if __name__ == '__main__':
         url='https://www.mathworks.com/',
         platforms=['Linux', 'Windows', 'MacOS'],
         packages=[
-            'libreduzehaze'
+            'libreducehaze'
         ],
-        package_data={'libreduzehaze': ['*.ctf']},
+        package_data={'libreducehaze': ['*.ctf']},
         # Executes the custom code above in order to delete the build area.
         cmdclass={'install': InstallRuntime}
     )

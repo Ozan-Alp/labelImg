@@ -112,10 +112,15 @@ class Shape(object):
             painter.fillPath(vertex_path, self.vertex_fill_color)
 
             # Draw text at the top-left
+            self.paint_label=True
             if self.paint_label:
+                self.label_font_size=48
+                beyazpen=QPen(QColor(0, 255, 255))
+                beyazpen.setWidth(max(1, int(round(2.0 / self.scale))))
+                painter.setPen(beyazpen)
                 min_x = sys.maxsize
                 min_y = sys.maxsize
-                min_y_label = int(1.25 * self.label_font_size)
+                min_y_label = int(0.75 * self.label_font_size)
                 for point in self.points:
                     min_x = min(min_x, point.x())
                     min_y = min(min_y, point.y())

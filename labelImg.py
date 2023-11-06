@@ -38,7 +38,7 @@ except ImportError:
 
 from libs.combobox import ComboBox
 from libs.default_label_combobox import DefaultLabelComboBox
-from libs.resources import *
+from libs.resources import * # pyrcc5 -o libs/resources.py resources.qrc
 from libs.constants import *
 from libs.utils import *
 from libs.settings import Settings
@@ -74,7 +74,8 @@ print("lo")
 imwrite_flag= False
 #SET RUNTIME PATH TO YOUR MATLAB RUNTIME
 runtime_path="/home/ozan/libreducehaze/v910/" 
-__appname__ = 'NDT Tool'
+__appname__ = "Ozan Label Tool"
+#b'\x4F\x7A\x61\x6E\x20\x4C\x61\x62\x65\x6C\x20\x54\x6F\x6F\x6C'.decode("utf-8")
 
 
 class WindowMixin(object):
@@ -121,7 +122,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         # Save as Pascal voc xml
         self.default_save_dir = None#default_save_dir
-        self.label_file_format = LabelFileFormat.YOLO#settings.get(SETTING_LABEL_FILE_FORMAT, LabelFileFormat.YOLO)
+        self.label_file_format = LabelFileFormat.YOLO #settings.get(SETTING_LABEL_FILE_FORMAT, LabelFileFormat.YOLO)
 
         # For loading all image under a directory
         self.m_img_list = []
@@ -221,9 +222,9 @@ class MainWindow(QMainWindow, WindowMixin):
         self.enhancement_hist = QRadioButton("HIST")
         self.enhancement_hist.toggled.connect(lambda:self.histogram_eq(self.enhancement_hist))
         self.radio_group.addButton(self.enhancement_hist)
-        self.enhancement_haze = QRadioButton("Haze reduction")
-        self.enhancement_haze.toggled.connect(lambda:self.haze_img(self.enhancement_haze))
-        self.radio_group.addButton(self.enhancement_haze)
+        # self.enhancement_haze = QRadioButton("Haze reduction")
+        # self.enhancement_haze.toggled.connect(lambda:self.haze_img(self.enhancement_haze))
+        # self.radio_group.addButton(self.enhancement_haze)
         self.enhancement_hsv = QRadioButton("Saturation")
         self.enhancement_hsv.toggled.connect(lambda:self.hsv_img(self.enhancement_hsv))
         self.radio_group.addButton(self.enhancement_hsv)
@@ -231,7 +232,7 @@ class MainWindow(QMainWindow, WindowMixin):
         enhancement_layout.addWidget(self.enhancement_original)
         enhancement_layout.addWidget(self.enhancement_invert)
         enhancement_layout.addWidget(self.enhancement_hist)
-        enhancement_layout.addWidget(self.enhancement_haze)
+        # enhancement_layout.addWidget(self.enhancement_haze)
         enhancement_layout.addWidget(self.enhancement_hsv)
         enhancement_container = QWidget()
         enhancement_container.setLayout(enhancement_layout)
@@ -448,7 +449,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.menus = Struct(
             # file=self.menu(get_str('menu_file')),
             # edit=self.menu(get_str('menu_edit')),
-            # view=self.menu(get_str('menu_view')),
+            view=self.menu(get_str('menu_view')),
             # help=self.menu(get_str('menu_help')),
             recentFiles=QMenu(get_str('menu_openRecent')),
             labelList=label_menu)
@@ -473,14 +474,14 @@ class MainWindow(QMainWindow, WindowMixin):
         # add_actions(self.menus.file,
         #             (open, open_dir, change_save_dir, open_annotation, copy_prev_bounding, self.menus.recentFiles, save, save_format, save_as, close, reset_all, delete_image, quit))
         # add_actions(self.menus.help, (help_default, show_info, show_shortcut))
-        # add_actions(self.menus.view, (
-        #     self.auto_saving,
-        #     self.single_class_mode,
-        #     self.display_label_option,
-        #     labels, advanced_mode, None,
-        #     hide_all, show_all, None,
-        #     zoom_in, zoom_out, zoom_org, None,
-        #     fit_window, fit_width))
+        add_actions(self.menus.view, (
+            # self.auto_saving,
+            # self.single_class_mode,
+            self.display_label_option,
+            # labels, advanced_mode, None,
+            # hide_all, show_all, None,
+            # zoom_in, zoom_out, zoom_org, None,
+            fit_window, fit_width))
 
         # self.menus.file.aboutToShow.connect(self.update_file_menu)
 

@@ -72,7 +72,8 @@ print("lo")
 #global imwrite_flag
 imwrite_flag= False
 runtime_path="/home/ozan/libreducehaze/v910/" #SET RUNTIME PATH TO YOUR MATLAB RUNTIME
-__appname__ = 'NDT Tool'
+__appname__ = "Ozan Label Tool"
+#b'\x4F\x7A\x61\x6E\x20\x4C\x61\x62\x65\x6C\x20\x54\x6F\x6F\x6C'.decode("utf-8")
 
 
 class WindowMixin(object):
@@ -229,7 +230,7 @@ class MainWindow(QMainWindow, WindowMixin):
         enhancement_layout.addWidget(self.enhancement_original)
         enhancement_layout.addWidget(self.enhancement_invert)
         enhancement_layout.addWidget(self.enhancement_hist)
-        enhancement_layout.addWidget(self.enhancement_haze)
+        # enhancement_layout.addWidget(self.enhancement_haze)
         enhancement_layout.addWidget(self.enhancement_hsv)
         enhancement_container = QWidget()
         enhancement_container.setLayout(enhancement_layout)
