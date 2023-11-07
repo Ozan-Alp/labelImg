@@ -5,7 +5,7 @@ Traceback (most recent call last):
     self.run()
   File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.2288.0_x64__qbz5n2kfra8p0\lib\multiprocessing\process.py", line 108, in run
     self._target(*self._args, **self._kwargs)
-  File "C:\Users\ozan\Desktop\labelImg\labelImg.py", line 2088, in matlab_dehaze
+  File "C:\Users\ozan\Desktop\labelImg\labelImg.pyw", line 2077, in matlab_dehaze
     import libreducehaze
   File "C:\Users\ozan\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\libreducehaze\__init__.py", line 296, in <module>
     _pir = _PathInitializer()
